@@ -5,7 +5,6 @@ import multiprocessing
 
 from Player import Player
 from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS
-from SimplexNoise import generate_terrain_chunk, generate_terrain_chunk, simplex_noise
 from Client import client_communication_loop
 import Render
 
@@ -24,16 +23,8 @@ def game_loop(player, shared_memory):
     chunk_data = {}
 
     while not raylib.WindowShouldClose():
-        
-        value = simplex_noise(player.locsize.x // TILE_SIZE, 
-                              player.locsize.y // TILE_SIZE)
 
-        if value < Render.water:
-            player.speed = 150
-        else:
-            player.speed = 300
-
-        player.move()
+        player.move([])
 
         raylib.BeginDrawing()
         raylib.ClearBackground(rl.RAYWHITE)
