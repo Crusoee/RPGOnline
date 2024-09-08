@@ -61,6 +61,9 @@ class Player():
                     break
 
     def move(self, chunk_data):
+        if self.health <= 0:
+            self.locsize.x = 0
+            self.locsize.y = 0
 
         value = simplex_noise(self.locsize.x // TILE_SIZE, 
                         self.locsize.y // TILE_SIZE)
@@ -106,4 +109,17 @@ class Player():
                 if key == shared_memory['user']:
                     continue
                 if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(shared_memory['players'][0][key])):
-                    print(f'{shared_memory['players'][0][key][2]}, {shared_memory['players'][0][key][3]}, {shared_memory['players'][0][key][4]}, {shared_memory['players'][0][key][5]}')
+                    print(f'{shared_memory['players'][0][key][0]['hlth']}, {shared_memory['players'][0][key][0]['dmg']}, {shared_memory['players'][0][key][0]['mgc']}, {shared_memory['players'][0][key][0]['arm']}')
+
+        if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_RIGHT):
+                    mouse_position_window = rl.get_mouse_position()
+                    select_coordinate = rl.Vector2(
+                        (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
+                        (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
+                    )
+
+                    for key, value in shared_memory['players'][0].items():
+                        if key == shared_memory['user']:
+                            continue
+                        if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(shared_memory['players'][0][key])):
+                            print(f'{shared_memory['players'][0][key][0]['hlth']}, {shared_memory['players'][0][key][0]['dmg']}, {shared_memory['players'][0][key][0]['mgc']}, {shared_memory['players'][0][key][0]['arm']}')

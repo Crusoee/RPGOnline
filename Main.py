@@ -38,10 +38,10 @@ def game_loop(player, shared_memory):
 
         raylib.EndMode2D()
 
-        rl.draw_text(f"{1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.BLACK)
-        # rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.DARKBLUE)
-        rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
-        rl.draw_text(f"X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.DARKBLUE)
+        rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.BLACK)
+        rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.DARKBLUE)
+        # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
+        rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.DARKBLUE)
 
         raylib.EndDrawing()
         
@@ -51,7 +51,13 @@ def game_loop(player, shared_memory):
         player.select(shared_memory)
 
         # updating my current coordinates for other players
-        shared_memory['player'] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
+        # shared_memory['player'] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
+        shared_memory['player'] = {'x' : player.locsize.x,
+                               'y' : player.locsize.y,
+                               'dmg' : player.damage,
+                               'mgc' : player.magic,
+                               'arm' : player.armor,
+                               'hlth' : player.health}
 
     shared_memory['running'] = False
     raylib.CloseWindow()
@@ -61,7 +67,13 @@ def main() -> int:
     
     manager = multiprocessing.Manager()
     shared_memory = manager.dict()
-    shared_memory["player"] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
+    # shared_memory["player"] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
+    shared_memory["player"] = {'x' : player.locsize.x,
+                               'y' : player.locsize.y,
+                               'dmg' : player.damage,
+                               'mgc' : player.magic,
+                               'arm' : player.armor,
+                               'hlth' : player.health}
     shared_memory["players"] = manager.list([{}])  # Use a managed list for nested data
     shared_memory["user"] = ""
     shared_memory["running"] = True

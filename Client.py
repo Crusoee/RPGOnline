@@ -50,6 +50,7 @@ def client_communication_loop(shared_memory):
     shared_memory['user'] = get_message(s)
 
     while shared_memory['running']:
-        send_message(s, [int(shared_memory['player'][0]), int(shared_memory['player'][1]), int(shared_memory['player'][2]), int(shared_memory['player'][3]), int(shared_memory['player'][4]), int(shared_memory['player'][5])],False)
-        
+        # send_message(s, [int(shared_memory['player'][0]), int(shared_memory['player'][1]), int(shared_memory['player'][2]), int(shared_memory['player'][3]), int(shared_memory['player'][4]), int(shared_memory['player'][5])],False)
+        send_message(s, [shared_memory['player']],False)
+
         shared_memory['players'] = get_message(s,False)

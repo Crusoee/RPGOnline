@@ -72,4 +72,6 @@ def draw_players(shared_memory):
     for key, value in shared_memory['players'][0].items():
         if key == shared_memory['user']:
             continue
-        raylib.DrawRectangle(shared_memory['players'][0][key][0], shared_memory['players'][0][key][1], 40, 80, rl.RED)
+        # raylib.DrawRectangle(shared_memory['players'][0][key][0], shared_memory['players'][0][key][1], 40, 80, rl.RED
+        # print(shared_memory['players'][0][key][0])
+        raylib.DrawRectangle(int(shared_memory['players'][0][key][0]['x']), int(shared_memory['players'][0][key][0]['y']), 40, 80, rl.RED)

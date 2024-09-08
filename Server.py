@@ -64,7 +64,7 @@ def handle_client(conn, addr, client_data, client_data_lock):
                 with client_data_lock:
                     client_data[f"{addr[0]}:{addr[1]}"] = data
 
-                send_message(conn, [dict(client_data), addr[0]], False)
+                send_message(conn, [dict(client_data)], False)
             except Exception as e:
                 logging.error(f"Error processing data from {addr[0]}:{addr[1]}: {e}")
                 break
