@@ -33,12 +33,12 @@ class Player():
         if self.coordinate != None:
             displaced = rl.Vector2(self.coordinate.x - self.locsize.x + self.base.x, self.coordinate.y - self.locsize.y + self.base.y)
             length = math.sqrt(displaced.x**2 + displaced.y**2)
-            dir_vec = rl.Vector2(displaced.x / length, displaced.y / length)
-            self.locsize.x += dir_vec.x * self.speed * raylib.GetFrameTime()
-            self.locsize.y += dir_vec.y * self.speed * raylib.GetFrameTime()
-
-            if abs(self.locsize.x - self.base.x - self.coordinate.x) < 1.5 and abs(self.locsize.y - self.base.y - self.coordinate.y) < 1.5:
-                self.coordinate = None
+            if length != 0:
+                dir_vec = rl.Vector2(displaced.x / length, displaced.y / length)
+                self.locsize.x += dir_vec.x * self.speed * raylib.GetFrameTime()
+                self.locsize.y += dir_vec.y * self.speed * raylib.GetFrameTime()
+                if length < 150.0 * raylib.GetFrameTime():
+                    self.coordinate = None
 
         self.camera.target.x = self.locsize.x
         self.camera.target.y = self.locsize.y
@@ -48,3 +48,7 @@ class Player():
             self.color = rl.Color(0, 0, 0, 0)
         else:
             self.color = self.orig_col
+
+    def collision(collidable_objects):
+        for object in collidable_objects:
+            if 

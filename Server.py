@@ -1,23 +1,12 @@
 import socket
-import threading
+import multiprocessing
 import pickle
-
 import zlib
-from Generation import landmark_generation, color_generation
-from Perlin import generate_landscape
+import logging
 
-hostname = socket.gethostname()
-IPAddr = socket.gethostbyname(hostname)
-
-HOST = "0.0.0.0"  # Standard loopback interface address (localhost)
-PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
-
-run = True
-client_data = {}
-data_lock = threading.Lock()
-
-
-landscape = generate_landscape()
+# Constants
+HOST = "0.0.0.0"
+PORT = 65432
 
 def send_message(conn, data, use_compression=True):
     # Serialize data
@@ -56,49 +45,52 @@ def get_message(conn, use_compression=True):
     # Deserialize data
     return pickle.loads(received_data)
 
-
-def player_data(conn, addr):
-    print(f"Threaded connection with {addr[0]} on port {addr[1]} started...")
+def handle_client(conn, addr, client_data, client_data_lock):
+    logging.info(f"Connection with {addr[0]} on port {addr[1]} started...")
     conn.settimeout(5.0)
 
     send_message(conn, f"{addr[0]}:{addr[1]}")
-    send_message(conn, landscape)
 
-    with conn:
+    try:
         while True:
             try:
                 data = get_message(conn, False)
                 
-
-                if data == 0 or None:
+                if data in [0, None]:
                     break
 
-                with data_lock:
+                with client_data_lock:
                     client_data[f"{addr[0]}:{addr[1]}"] = data
 
-                send_message(conn, [client_data, addr[0]], False)
-            except (pickle.PickleError, OSError, EOFError) as e:
-                print(f"Error processing data from {addr[0]}: {e}")
+                send_message(conn, [dict(client_data), addr[0]], False)
+            except Exception as e:
+                logging.error(f"Error processing data from {addr[0]}:{addr[1]}: {e}")
                 break
-    with data_lock:
-        client_data.pop(f"{addr[0]}:{addr[1]}", None)
-    print(f"Threaded connection with {addr[0]} on port {addr[1]} finished...")
+    finally:
+        with client_data_lock:
+            client_data.pop(f"{addr[0]}:{addr[1]}", None)
+        logging.info(f"Connection with {addr[0]} on port {addr[1]} finished...")
 
 def start_server():
+    client_data_lock = multiprocessing.Lock()
+    manager = multiprocessing.Manager()
+    client_data = manager.dict()
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen()
-        print(f"Server listening on {HOST}:{PORT}")
+        logging.info(f"Server listening on {HOST}:{PORT}")
 
-        while run:
+        while True:
             try:
                 conn, addr = s.accept()
-                threading.Thread(target=player_data, args=(conn, addr)).start()
+                multiprocessing.Process(target=handle_client, args=(conn, addr, client_data, client_data_lock)).start()
             except KeyboardInterrupt:
-                print("Server shutting down...")
+                logging.info("Server shutting down...")
                 break
             except Exception as e:
-                print(f"Server error: {e}")
+                logging.error(f"Server error: {e}")
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     start_server()

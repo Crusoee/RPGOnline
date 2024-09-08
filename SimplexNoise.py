@@ -1,8 +1,7 @@
 import noise
-from perlin_noise import PerlinNoise
 import numpy as np
 import matplotlib.pyplot as plt
-from CONSTANTS import CHUNK_SIZE, NUM_CHUNKS
+from CONSTANTS import CHUNK_SIZE
 
 # Parameters for the Perlin noise
 width = 100   # Width of the tilemap
