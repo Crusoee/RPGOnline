@@ -1,6 +1,5 @@
 import pyray as rl
 import raylib as raylib
-import threading
 import multiprocessing
 
 from Player import Player
@@ -13,7 +12,7 @@ def game_loop(player, shared_memory):
     raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, b"Hide And Seek")
     raylib.SetTargetFPS(0)
 
-    tiles = {    'water_tile' : rl.load_texture("topdown_tiles\\tiles\\deep0\\straight\\0\\0.png"),
+    tiles = {'water_tile' : rl.load_texture("topdown_tiles\\tiles\\deep0\\straight\\0\\0.png"),
         'shallow_tile' : rl.load_texture("topdown_tiles\\tiles\\shallow0\\straight\\0\\0.png"),
         'sand_tile' : rl.load_texture("topdown_tiles\\tiles\\beach0\\straight\\0\\0.png"),
         'grass_tile' : rl.load_texture("topdown_tiles\\tiles\\grass0\\straight\\0\\0.png"),
@@ -23,9 +22,7 @@ def game_loop(player, shared_memory):
     chunk_data = {}
 
     while not raylib.WindowShouldClose():
-
-        player.move([])
-
+        # Draw
         raylib.BeginDrawing()
         raylib.ClearBackground(rl.RAYWHITE)
         raylib.BeginMode2D(player.camera)
@@ -36,16 +33,25 @@ def game_loop(player, shared_memory):
 
         player.draw()
 
-        if player.coordinate != None:
-            raylib.DrawCircle(int(player.coordinate.x), int(player.coordinate.y), 5.0, rl.YELLOW)
+        # for jim in chunk_data[int(player.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(player.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1]:
+        #     raylib.DrawRectangleRec(jim, rl.GREEN)
 
         raylib.EndMode2D()
-        rl.draw_text(f"{1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.DARKBLUE)
-        rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.DARKBLUE)
+
+        rl.draw_text(f"{1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.BLACK)
+        # rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.DARKBLUE)
+        rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
+        rl.draw_text(f"X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.DARKBLUE)
+
         raylib.EndDrawing()
+        
+        # Handle Player
+        player.move(chunk_data)
+
+        player.select(shared_memory)
 
         # updating my current coordinates for other players
-        shared_memory['player'] = (player.locsize.x, player.locsize.y)
+        shared_memory['player'] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
 
     shared_memory['running'] = False
     raylib.CloseWindow()
@@ -55,7 +61,7 @@ def main() -> int:
     
     manager = multiprocessing.Manager()
     shared_memory = manager.dict()
-    shared_memory["player"] = (player.locsize.x, player.locsize.y)
+    shared_memory["player"] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
     shared_memory["players"] = manager.list([{}])  # Use a managed list for nested data
     shared_memory["user"] = ""
     shared_memory["running"] = True
@@ -63,13 +69,7 @@ def main() -> int:
     communicationloop = multiprocessing.Process(target=client_communication_loop, args=(shared_memory,))
     communicationloop.start()
 
-    # gameloop = multiprocessing.Process(target=game_loop, args=(shared_memory,))
-    # gameloop.start()
-
-    # gameloop.join()
-
     game_loop(player, shared_memory)
-
 
     communicationloop.join()
 

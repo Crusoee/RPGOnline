@@ -50,7 +50,7 @@ def generate_terrain_chunk(chunk_x, chunk_y):
     for y in range(CHUNK_SIZE):
         for x in range(CHUNK_SIZE):
             # Convert chunk coordinates to world coordinates
-            chunk_data[y][x] = simplex_noise(chunk_x * CHUNK_SIZE + x-1, chunk_y * CHUNK_SIZE + y-1)
+            chunk_data[y][x] = simplex_noise(chunk_x * CHUNK_SIZE + x, chunk_y * CHUNK_SIZE + y)
 
     return chunk_data
 

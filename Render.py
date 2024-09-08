@@ -2,12 +2,13 @@ import pyray as rl
 import raylib as raylib
 from CONSTANTS import NUM_CHUNKS, CHUNK_SIZE, TILE_SIZE
 from SimplexNoise import generate_terrain_chunk
+import numpy as np
 
 water = -.1
 shallow = 0
 sand = 0.1
 grass = 0.3
-forest = 0.45
+forest = 0.48
 rocks = None
 
 def get_tile_texture(value, tiles):
@@ -23,6 +24,18 @@ def get_tile_texture(value, tiles):
         return tiles['forest_tile']
     else:
         return tiles['rock_tile']
+    
+def generate_collision_chunk(values, chunk_x, chunk_y):
+    chunkers = []
+
+    for y in range(values.shape[1]):
+        for x in range(values.shape[0]):
+            # Convert chunk coordinates to world coordinates
+            if values[y, x] > forest:
+                # print((chunk_x * CHUNK_SIZE + x) * TILE_SIZE, (chunk_y * CHUNK_SIZE + y) * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                chunkers.append(rl.Rectangle((chunk_x * CHUNK_SIZE + x) * TILE_SIZE, (chunk_y * CHUNK_SIZE + y) * TILE_SIZE, TILE_SIZE, TILE_SIZE))
+    
+    return chunkers
 
 
 def draw_tiles(player, chunk_data, tiles):
@@ -41,13 +54,15 @@ def draw_tiles(player, chunk_data, tiles):
         for chunk_x in range(int(chunk_x_start), int(chunk_x_end)):
             # Generate chunk if not already cached
             if (chunk_x, chunk_y) not in chunk_data:
-                chunk_data[chunk_x, chunk_y] = generate_terrain_chunk(chunk_x, chunk_y)
-                # print(chunk_x, chunk_y)
+                terrain_data = generate_terrain_chunk(chunk_x, chunk_y)
+                collision_data = generate_collision_chunk(terrain_data, chunk_x, chunk_y)
+                # print(collision_data, chunk_x, chunk_y)
+                chunk_data[chunk_x, chunk_y] = [terrain_data,collision_data]
 
             # Draw tiles in the chunk
             for y in range(CHUNK_SIZE):
                 for x in range(CHUNK_SIZE):
-                    tile_type = chunk_data[chunk_x, chunk_y][y][x]
+                    tile_type = chunk_data[chunk_x, chunk_y][0][y][x]
                     tile_texture = get_tile_texture(tile_type, tiles)
                     tile_draw_x = (chunk_x * CHUNK_SIZE + x) * TILE_SIZE
                     tile_draw_y = (chunk_y * CHUNK_SIZE + y) * TILE_SIZE
