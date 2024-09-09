@@ -1,7 +1,7 @@
 import raylib
 import pyray as rl
 import math
-from LoadRectangle import get_rectangle
+from Helper import get_rectangle
 
 from SimplexNoise import simplex_noise
 import Render
@@ -11,10 +11,7 @@ class Player():
     def __init__(self, color, locsize, speed, name):
         self.name = name
 
-        self.health = 10
-        self.damage = 1
-        self.magic = 1
-        self.armor = 0
+        self.hit = ''
 
         self.stats = {'dmg' : 1,
             'mgc' : 0,
@@ -69,7 +66,8 @@ class Player():
                     break
 
     def move(self, chunk_data):
-        if self.health <= 0:
+
+        if self.stats['hlth'] <= 0:
             self.locsize.x = 0
             self.locsize.y = 0
 
@@ -116,10 +114,14 @@ class Player():
             for key, value in shared_memory['players'][0].items():
                 if key == shared_memory['user']:
                     continue
+
+                player = shared_memory['players'][0][key]
+
                 if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(shared_memory['players'][0][key])):
-                    print(f'{shared_memory['players'][0][key][0]['hlth']}, {shared_memory['players'][0][key][0]['dmg']}, {shared_memory['players'][0][key][0]['mgc']}, {shared_memory['players'][0][key][0]['arm']}')
+                    print(f'{player['hlth']}, {player['dmg']}, {player['mgc']}, {player['arm']}')
 
         if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_RIGHT):
+            
             mouse_position_window = rl.get_mouse_position()
             select_coordinate = rl.Vector2(
                 (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
@@ -130,4 +132,16 @@ class Player():
                 if key == shared_memory['user']:
                     continue
                 if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(shared_memory['players'][0][key])):
-                    print(f'{shared_memory['players'][0][key][0]['hlth']}, {shared_memory['players'][0][key][0]['dmg']}, {shared_memory['players'][0][key][0]['mgc']}, {shared_memory['players'][0][key][0]['arm']}')
+                    self.coordinate = None
+                    self.hit = key
+                    break
+
+    def update(self, shared_memory):
+        # If my user name that the server recognizes my client as, has my stats in its player database, give me those stats
+        if shared_memory['user'] in shared_memory['players'][0].keys():
+            stats = shared_memory['players'][0][shared_memory['user']]
+
+            self.stats['hlth'] = stats['hlth']
+            self.stats['dmg'] = stats['dmg']
+            self.stats['mgc'] = stats['mgc']
+            self.stats['arm'] = stats['arm']

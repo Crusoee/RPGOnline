@@ -23,7 +23,7 @@ def game_loop(player, shared_memory):
     chunk_data = {}
 
     while not raylib.WindowShouldClose():
-        # Draw
+        # -------------Draw-------------------
         raylib.BeginDrawing()
         raylib.ClearBackground(rl.RAYWHITE)
         raylib.BeginMode2D(player.camera)
@@ -45,21 +45,25 @@ def game_loop(player, shared_memory):
         rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
 
         raylib.EndDrawing()
+
+        # -------------Mechanics-------------------
         
-        # Handle Player
+        # Updating Player Stats
+        player.update(shared_memory)
+
+        # Moving and Colliding Player
         player.move(chunk_data)
 
+        # Gui/World Interaction
         player.select(shared_memory)
 
         # updating my current coordinates for other players
         # shared_memory['player'] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
         shared_memory['player'] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
-                               'dmg' : player.damage,
-                               'mgc' : player.magic,
-                               'arm' : player.armor,
-                               'hlth' : player.health,
-                               'nme' : player.name}
+                               'nme' : player.name,
+                               'hit' : player.hit}
+        # player.hit = ''
 
     shared_memory['running'] = False
     raylib.CloseWindow()
@@ -85,13 +89,11 @@ def main() -> int:
     # shared_memory["player"] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
     shared_memory["player"] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
-                               'dmg' : player.damage,
-                               'mgc' : player.magic,
-                               'arm' : player.armor,
-                               'hlth' : player.health,
-                               'nme' : ''}
+                               'nme' : name,
+                               'hit' : ''}
     shared_memory["players"] = manager.list([{}])  # Use a managed list for nested data
     shared_memory["user"] = ""
+    shared_memory["stats"] = player.stats
     shared_memory["running"] = True
 
     communicationloop = multiprocessing.Process(target=client_communication_loop, args=(shared_memory,))

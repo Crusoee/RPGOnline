@@ -58,24 +58,37 @@ def handle_client(conn, addr, client_data, client_data_lock):
 
     send_message(conn, f"{addr[0]}:{addr[1]}")
 
-    stats = {'dmg' : 1,
-            'mgc' : 0,
-            'arm' : 0,
-            'hlth' : 10}
+    stats = {
+                'x' : 0,
+                'y' : 0,
+                'nme' : '',
+                'dmg' : 1,
+                'mgc' : 0,
+                'arm' : 0,
+                'hlth' : 10,
+                'hit' : ''
+            }
 
     while True:
         try:
             data = get_message(conn, False)
+
+            # Stats that the server trusts from the client
+            stats['x'] = data[0]['x']
+            stats['y'] = data[0]['y']
+            stats['nme'] = data[0]['nme']
             
             if data in [0, None]:
                 break
 
-            # send_message
-
             with client_data_lock:
-                client_data[f"{addr[0]}:{addr[1]}"] = data
+
+                # if data[0]['hit'] in client_data.keys():
+                #     client_data[data[0]['hit']]['hlth'] -= stats['dmg']
+
+                client_data[f"{addr[0]}:{addr[1]}"] = stats
                 send_message(conn, [dict(client_data)], False)
-        except (TimeoutError, EOFError) as e:
+        except (TimeoutError, EOFError, KeyError, ConnectionResetError) as e:
             print(f"Error processing data from {addr[0]}:{addr[1]}: {e}")
             break
     
