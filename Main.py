@@ -1,6 +1,7 @@
 import pyray as rl
 import raylib as raylib
 import multiprocessing
+import random
 
 from Player import Player
 from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS
@@ -39,9 +40,9 @@ def game_loop(player, shared_memory):
         raylib.EndMode2D()
 
         rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.BLACK)
-        rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.DARKBLUE)
+        rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.BLACK)
         # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
-        rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.DARKBLUE)
+        rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
 
         raylib.EndDrawing()
         
@@ -57,13 +58,27 @@ def game_loop(player, shared_memory):
                                'dmg' : player.damage,
                                'mgc' : player.magic,
                                'arm' : player.armor,
-                               'hlth' : player.health}
+                               'hlth' : player.health,
+                               'nme' : player.name}
 
     shared_memory['running'] = False
     raylib.CloseWindow()
 
 def main() -> int:
-    player = Player(rl.SKYBLUE, rl.Rectangle(0, 0, 40, 80), 500)
+
+    names = [
+        'Jimmynns',
+        'Johnseff',
+        'Jamie',
+        'Wendel',
+        'Rocklin',
+        'Rakkel',
+        'Byron',
+        'Brachel'
+    ]
+    name = names[random.randint(0,len(names)-1)]
+
+    player = Player(rl.SKYBLUE, rl.Rectangle(0, 0, 40, 80), 500, name)
     
     manager = multiprocessing.Manager()
     shared_memory = manager.dict()
@@ -73,7 +88,8 @@ def main() -> int:
                                'dmg' : player.damage,
                                'mgc' : player.magic,
                                'arm' : player.armor,
-                               'hlth' : player.health}
+                               'hlth' : player.health,
+                               'nme' : ''}
     shared_memory["players"] = manager.list([{}])  # Use a managed list for nested data
     shared_memory["user"] = ""
     shared_memory["running"] = True

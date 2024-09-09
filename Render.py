@@ -75,3 +75,5 @@ def draw_players(shared_memory):
         # raylib.DrawRectangle(shared_memory['players'][0][key][0], shared_memory['players'][0][key][1], 40, 80, rl.RED
         # print(shared_memory['players'][0][key][0])
         raylib.DrawRectangle(int(shared_memory['players'][0][key][0]['x']), int(shared_memory['players'][0][key][0]['y']), 40, 80, rl.RED)
+        rl.draw_text(shared_memory['players'][0][key][0]['nme'],int(shared_memory['players'][0][key][0]['x']) - len(shared_memory['players'][0][key][0]['nme']) // 2,
+                     int(shared_memory['players'][0][key][0]['y']) - 40,20,rl.BLACK)

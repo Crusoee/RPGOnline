@@ -2,7 +2,7 @@ import socket
 import multiprocessing
 import pickle
 import zlib
-import logging
+import time
 
 from SimplexNoise import simplex_noise
 
@@ -47,31 +47,41 @@ def get_message(conn, use_compression=True):
     # Deserialize data
     return pickle.loads(received_data)
 
+def get_status(client_data):
+    while True:
+        time.sleep(20)
+        print("Amount of Players: ", len(client_data))
+
 def handle_client(conn, addr, client_data, client_data_lock):
-    logging.info(f"Connection with {addr[0]} on port {addr[1]} started...")
+    print(f"Connection with {addr[0]} on port {addr[1]} started...")
     conn.settimeout(5.0)
 
     send_message(conn, f"{addr[0]}:{addr[1]}")
 
-    try:
-        while True:
-            try:
-                data = get_message(conn, False)
-                
-                if data in [0, None]:
-                    break
+    stats = {'dmg' : 1,
+            'mgc' : 0,
+            'arm' : 0,
+            'hlth' : 10}
 
-                with client_data_lock:
-                    client_data[f"{addr[0]}:{addr[1]}"] = data
-
-                send_message(conn, [dict(client_data)], False)
-            except Exception as e:
-                logging.error(f"Error processing data from {addr[0]}:{addr[1]}: {e}")
+    while True:
+        try:
+            data = get_message(conn, False)
+            
+            if data in [0, None]:
                 break
-    finally:
-        with client_data_lock:
-            client_data.pop(f"{addr[0]}:{addr[1]}", None)
-        logging.info(f"Connection with {addr[0]} on port {addr[1]} finished...")
+
+            # send_message
+
+            with client_data_lock:
+                client_data[f"{addr[0]}:{addr[1]}"] = data
+                send_message(conn, [dict(client_data)], False)
+        except (TimeoutError, EOFError) as e:
+            print(f"Error processing data from {addr[0]}:{addr[1]}: {e}")
+            break
+    
+    with client_data_lock:
+        client_data.pop(f"{addr[0]}:{addr[1]}", None)
+    print(f"Connection with {addr[0]} on port {addr[1]} finished...")
 
 def start_server():
     client_data_lock = multiprocessing.Lock()
@@ -81,18 +91,20 @@ def start_server():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen()
-        logging.info(f"Server listening on {HOST}:{PORT}")
+        print(f"Server listening on {HOST}:{PORT}")
+
+        multiprocessing.Process(target=get_status, args=(client_data,)).start()
 
         while True:
             try:
                 conn, addr = s.accept()
                 multiprocessing.Process(target=handle_client, args=(conn, addr, client_data, client_data_lock)).start()
             except KeyboardInterrupt:
-                logging.info("Server shutting down...")
+                print("Server shutting down...")
                 break
             except Exception as e:
-                logging.error(f"Server error: {e}")
+                print(f"Server error: {e}")
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    print('Server Starting...')
     start_server()

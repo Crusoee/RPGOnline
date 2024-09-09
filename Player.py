@@ -8,11 +8,18 @@ import Render
 from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE
 
 class Player():
-    def __init__(self, color, locsize, speed):
+    def __init__(self, color, locsize, speed, name):
+        self.name = name
+
         self.health = 10
         self.damage = 1
         self.magic = 1
         self.armor = 0
+
+        self.stats = {'dmg' : 1,
+            'mgc' : 0,
+            'arm' : 0,
+            'hlth' : 10}
 
         self.speed = speed
         self.color = color
@@ -34,6 +41,7 @@ class Player():
         raylib.DrawRectangleRec(self.locsize, self.color)
         if self.coordinate != None:
             raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
+        rl.draw_text(self.name, int(self.locsize.x - (len(self.name) // 2)), int(self.locsize.y - 20), 20, rl.GREEN)
 
     def collision(self, collidable_objects):
         for object in collidable_objects:
@@ -112,14 +120,14 @@ class Player():
                     print(f'{shared_memory['players'][0][key][0]['hlth']}, {shared_memory['players'][0][key][0]['dmg']}, {shared_memory['players'][0][key][0]['mgc']}, {shared_memory['players'][0][key][0]['arm']}')
 
         if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_RIGHT):
-                    mouse_position_window = rl.get_mouse_position()
-                    select_coordinate = rl.Vector2(
-                        (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
-                        (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
-                    )
+            mouse_position_window = rl.get_mouse_position()
+            select_coordinate = rl.Vector2(
+                (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
+                (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
+            )
 
-                    for key, value in shared_memory['players'][0].items():
-                        if key == shared_memory['user']:
-                            continue
-                        if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(shared_memory['players'][0][key])):
-                            print(f'{shared_memory['players'][0][key][0]['hlth']}, {shared_memory['players'][0][key][0]['dmg']}, {shared_memory['players'][0][key][0]['mgc']}, {shared_memory['players'][0][key][0]['arm']}')
+            for key, value in shared_memory['players'][0].items():
+                if key == shared_memory['user']:
+                    continue
+                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(shared_memory['players'][0][key])):
+                    print(f'{shared_memory['players'][0][key][0]['hlth']}, {shared_memory['players'][0][key][0]['dmg']}, {shared_memory['players'][0][key][0]['mgc']}, {shared_memory['players'][0][key][0]['arm']}')

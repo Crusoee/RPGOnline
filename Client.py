@@ -3,6 +3,7 @@ import pickle
 import socket
 
 host = '192.168.56.1'
+# host = '10.0.0.128'
 port = 65432
 
 def get_message(conn, use_compression=True):
