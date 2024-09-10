@@ -43,6 +43,7 @@ def game_loop(player, shared_memory):
         rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.BLACK)
         # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
         rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
+        rl.draw_text(f"health: {player.stats['hlth']}", 50, 200, 40, rl.BLACK)
 
         raylib.EndDrawing()
 
@@ -57,13 +58,14 @@ def game_loop(player, shared_memory):
         # Gui/World Interaction
         player.select(shared_memory)
 
+
         # updating my current coordinates for other players
-        # shared_memory['player'] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
         shared_memory['player'] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
                                'nme' : player.name,
                                'hit' : player.hit}
-        # player.hit = ''
+        
+        player.attack_reset()
 
     shared_memory['running'] = False
     raylib.CloseWindow()
@@ -86,7 +88,6 @@ def main() -> int:
     
     manager = multiprocessing.Manager()
     shared_memory = manager.dict()
-    # shared_memory["player"] = [player.locsize.x, player.locsize.y, player.damage, player.magic, player.armor, player.health]
     shared_memory["player"] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
                                'nme' : name,

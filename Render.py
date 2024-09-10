@@ -73,7 +73,10 @@ def draw_players(shared_memory):
         if key == shared_memory['user']:
             continue
 
-        player = shared_memory['players'][0][key]
+        try:
+            player = shared_memory['players'][0][key]
 
-        raylib.DrawRectangle(int(player['x']), int(player['y']), 40, 80, rl.RED)
-        rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
+            raylib.DrawRectangle(int(player['x']), int(player['y']), 40, 80, rl.RED)
+            rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
+        except KeyError as e:
+            print("Error Occurred in draw_players: ", e)

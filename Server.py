@@ -58,6 +58,16 @@ def handle_client(conn, addr, client_data, client_data_lock):
 
     send_message(conn, f"{addr[0]}:{addr[1]}")
 
+    # manager = multiprocessing.Manager()
+    # stats = manager.dict()
+    # stats['x'] = 0
+    # stats['y'] = 0
+    # stats['nme'] = ''
+    # stats['dmg'] = 1
+    # stats['mgc'] = 0
+    # stats['arm'] = 0
+    # stats['hlth'] = 10
+    # stats['hit'] = ''
     stats = {
                 'x' : 0,
                 'y' : 0,
@@ -68,26 +78,37 @@ def handle_client(conn, addr, client_data, client_data_lock):
                 'hlth' : 10,
                 'hit' : ''
             }
+    
+    with client_data_lock:
+        client_data[f"{addr[0]}:{addr[1]}"] = stats
 
     while True:
         try:
+            stats = client_data[f"{addr[0]}:{addr[1]}"]
+
+            # if stats['hlth'] <= 0:
+            #     stats['hlth'] = 10
+
             data = get_message(conn, False)
+            
+            if data in [0, None]:
+                break
 
             # Stats that the server trusts from the client
             stats['x'] = data[0]['x']
             stats['y'] = data[0]['y']
             stats['nme'] = data[0]['nme']
             
-            if data in [0, None]:
-                break
+            if data[0]['hit'] in client_data.keys():
+                enemy_stats = client_data[data[0]['hit']]
+                # print(client_data[data[0]['hit']]['hlth'])
+                enemy_stats['hlth'] -= stats['dmg']
 
-            with client_data_lock:
+                client_data[data[0]['hit']] = enemy_stats
 
-                # if data[0]['hit'] in client_data.keys():
-                #     client_data[data[0]['hit']]['hlth'] -= stats['dmg']
 
-                client_data[f"{addr[0]}:{addr[1]}"] = stats
-                send_message(conn, [dict(client_data)], False)
+            client_data[f"{addr[0]}:{addr[1]}"] = stats
+            send_message(conn, [dict(client_data)], False)
         except (TimeoutError, EOFError, KeyError, ConnectionResetError) as e:
             print(f"Error processing data from {addr[0]}:{addr[1]}: {e}")
             break

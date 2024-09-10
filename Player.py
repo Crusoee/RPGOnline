@@ -12,11 +12,12 @@ class Player():
         self.name = name
 
         self.hit = ''
-
         self.stats = {'dmg' : 1,
             'mgc' : 0,
             'arm' : 0,
             'hlth' : 10}
+        self.attacking = False
+        self.respawn = False
 
         self.speed = speed
         self.color = color
@@ -85,7 +86,7 @@ class Player():
                 (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
                 (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
             )
-
+        
         if self.coordinate != None:
             displaced = rl.Vector2(self.coordinate.x - self.locsize.x + self.base.x, self.coordinate.y - self.locsize.y + self.base.y)
             length = math.sqrt(displaced.x**2 + displaced.y**2)
@@ -117,7 +118,7 @@ class Player():
 
                 player = shared_memory['players'][0][key]
 
-                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(shared_memory['players'][0][key])):
+                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
                     print(f'{player['hlth']}, {player['dmg']}, {player['mgc']}, {player['arm']}')
 
         if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_RIGHT):
@@ -131,10 +132,18 @@ class Player():
             for key, value in shared_memory['players'][0].items():
                 if key == shared_memory['user']:
                     continue
-                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(shared_memory['players'][0][key])):
-                    self.coordinate = None
+
+                player = shared_memory['players'][0][key]
+
+                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
+                    self.attacking = True
                     self.hit = key
+                    # print(self.hit)
                     break
+
+    def attack_reset(self):
+        self.attacking = False
+        self.hit = ''
 
     def update(self, shared_memory):
         # If my user name that the server recognizes my client as, has my stats in its player database, give me those stats
