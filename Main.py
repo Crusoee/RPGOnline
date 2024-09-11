@@ -63,7 +63,7 @@ def game_loop(player, shared_memory):
         shared_memory['player'] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
                                'nme' : player.name,
-                               'hit' : player.hit}
+                               'action' : player.action}
         
         # player.attack_reset()
 
@@ -91,7 +91,7 @@ def main() -> int:
     shared_memory["player"] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
                                'nme' : name,
-                               'hit' : ''}
+                               'hit' : player.action}
     shared_memory["players"] = manager.list([{}])  # Use a managed list for nested data
     shared_memory["user"] = ""
     shared_memory["stats"] = player.stats

@@ -7,18 +7,26 @@ from SimplexNoise import simplex_noise
 import Render
 from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE
 
+
 class Player():
     def __init__(self, color, locsize, speed, name):
         self.name = name
 
-        self.hit = ''
+        self.action = {
+                'type' : None,
+                'target' :None,
+                'x' : None,
+                'y' : None,
+            }
+        
         self.stats =    {  
-                        'dmg' : 1,
-                        'mgc' : 0,
-                        'arm' : 0,
-                        'hlth' : 10,
-                        'hit' : ''
+                            'dmg' : 1,
+                            'mgc' : 0,
+                            'arm' : 0,
+                            'hlth' : 10,
+                            'hit' : ''
                         }
+        
         self.attacking = False
         self.respawn = False
 
@@ -66,7 +74,7 @@ class Player():
                 # Bottom
                 if self.prev_locsize.y >= object.y + object.height:
                     self.locsize.y = object.y + object.height
-                    print("botttom")
+                    print("bottom")
                     break
 
     def move(self, chunk_data):
@@ -139,10 +147,16 @@ class Player():
                 player = shared_memory['players'][0][key]
 
                 if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
-                    self.attacking = True
-                    self.hit = key
+                    self.action['type'] = 'attack'
+                    self.action['target'] = key
+                    self.action['x'] = None
+                    self.action['y'] = None
                     return
-            self.hit = ''
+                
+            self.action['type'] = None
+            self.action['target'] = None
+            self.action['x'] = None
+            self.action['y'] = None
 
     def attack_reset(self):
         self.attacking = False
