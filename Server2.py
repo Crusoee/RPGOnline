@@ -54,47 +54,60 @@ def get_status(client_data):
         time.sleep(20)
         print("Amount of Players: ", len(client_data))
 
-def game_loop(client_data, client_data_lock, action_queue):
-    try:
+def game_loop(client_data, client_data_lock, action_queue, client_stats):
+    # try:
         while True: 
             start_time = time.time()
                 
             # Process all actions from the queue
             while not action_queue.empty():
                 action = action_queue.get()
-                target = client_data[action['target']]
-                attacker = client_data[action['attacker']]
+                target = client_stats[action['target']]
+                attacker = client_stats[action['attacker']]
+
+                if attacker['atc'] < attacker['ats']:
+                    attacker['atc'] += 1
+
                 # Player attack
-                if action['type'] == 'attack':
+                if action['type'] == 'attack' and attacker['atc'] >= attacker['ats']:
                     # if action['target'] in client_data and action['attacker'] in client_data:
                     
                     # damage = action['damage']
 
                     target['hlth'] -= attacker['dmg']
 
-                    with client_data_lock:
-                        client_data[action['target']] = target
+
+                    attacker['atc'] = 0
 
 
-            # making a sendable copy of client data that doesn't have the socket connection
-            client_data_sendable = dict(client_data).copy()
-            for addr, stats in client_data_sendable.items():
-                client_data_sendable[addr].pop('conn', None)
+                with client_data_lock:
+                    client_stats[action['target']] = target
+                    client_stats[action['attacker']] = attacker
 
+            normal_stats = dict(client_stats)
+            client_data_sendable = dict(client_data)
+
+            try:
+                # making a sendable copy of client data that doesn't have the socket connection
+                for key, value in client_data_sendable.items():
+                    client_data_sendable[key].update(normal_stats[key])
+                    client_data_sendable[key].pop('conn', None)
+            except (KeyError) as e:
+                print("Error: ", e)
+                
             # Update all clients
             with client_data_lock:
                 for addr, stats in client_data_sendable.items():
-                    send_message(client_data[addr]['conn'], [client_data_sendable], False)
+                    send_message(client_stats[addr]['conn'], [client_data_sendable], False)
 
             # Wait until the next tick
             elapsed = time.time() - start_time
             if elapsed < TICK_RATE:
                 time.sleep(TICK_RATE - elapsed)
-    except (KeyError) as e:
-        print("Errors!!: ", e)
-    ...
+    # except (KeyError) as e:
+    #     print("Errors!!: ", e)
 
-def handle_client(conn, addr, client_data, client_data_lock, action_queue):
+def handle_client(conn, addr, client_data, client_data_lock, action_queue, client_stats):
     print(f"Connection with {addr[0]} on port {addr[1]} started...")
     conn.settimeout(5.0)
 
@@ -102,22 +115,27 @@ def handle_client(conn, addr, client_data, client_data_lock, action_queue):
 
     send_message(conn, username)
 
-    stats = {
-                'user' : username,
+    zdata =  {
                 'x' : 0,
                 'y' : 0,
                 'nme' : '',
+            }
+
+    stats = {
+                'user' : username,
                 'dmg' : 1,
                 'mgc' : 0,
                 'arm' : 0,
                 'hlth' : 10,
                 'hit' : '',
-                'ats' : .5,
+                'ats' : 60,
+                'atc' : 60,
                 'conn' : conn
             }
     
     with client_data_lock:
-        client_data[username] = stats
+        client_data[username] = zdata
+        client_stats[username] = stats
 
     while True:
         try:
@@ -154,6 +172,7 @@ def start_server():
     manager = multiprocessing.Manager()
 
     client_data = manager.dict()
+    client_stats = manager.dict()
     action_queue = manager.Queue()
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -162,12 +181,12 @@ def start_server():
         print(f"Server listening on {HOST}:{PORT}")
 
         # multiprocessing.Process(target=get_status, args=(client_data,)).start()
-        multiprocessing.Process(target=game_loop, args=(client_data, client_data_lock, action_queue)).start()
+        multiprocessing.Process(target=game_loop, args=(client_data, client_data_lock, action_queue, client_stats)).start()
 
         while True:
             try:
                 conn, addr = s.accept()
-                multiprocessing.Process(target=handle_client, args=(conn, addr, client_data, client_data_lock, action_queue)).start()
+                multiprocessing.Process(target=handle_client, args=(conn, addr, client_data, client_data_lock, action_queue, client_stats)).start()
             except KeyboardInterrupt:
                 print("Server shutting down...")
                 break

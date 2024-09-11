@@ -2,15 +2,19 @@ import multiprocessing
 
 def main():
     manager = multiprocessing.Manager()
-    dictionary = manager.dict()
+    shared_dictionary_1 = manager.dict()
+    shared_dictionary_2 = manager.dict()
 
-    dictionary["jim"] = {'x': 1, 'y': 2, 'z' : 3}
+    shared_dictionary_1 = {'ip1' : {'x': 1}, 'ip2' : {'x': 2}, 'ip3' : {'x': 3}}
+    shared_dictionary_2 = {'ip1' : {'a': 1}, 'ip2' : {'a': 2}, 'ip3' : {'a': 3}}
 
-    print(dictionary['jim'])
+    dictionary1 = dict(shared_dictionary_1)
+    dictionary2 = dict(shared_dictionary_2)
 
-    dictionary['jim']['x'] += 1
+    for key, value in dictionary1.items():
+        dictionary1[key].update(dictionary2[key])
 
-    print(dictionary['jim'])
+    print(dictionary1)
 
 if __name__ == '__main__':
     main()
