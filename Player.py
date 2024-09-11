@@ -12,11 +12,13 @@ class Player():
         self.name = name
 
         self.hit = ''
-        self.stats = {'dmg' : 1,
-            'mgc' : 0,
-            'arm' : 0,
-            'hlth' : 10,
-            'hit' : ''}
+        self.stats =    {  
+                        'dmg' : 1,
+                        'mgc' : 0,
+                        'arm' : 0,
+                        'hlth' : 10,
+                        'hit' : ''
+                        }
         self.attacking = False
         self.respawn = False
 

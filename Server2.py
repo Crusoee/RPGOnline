@@ -54,13 +54,13 @@ def get_status(client_data):
         time.sleep(20)
         print("Amount of Players: ", len(client_data))
 
-def game_loop(client_data, client_data_lock):
+def game_loop(client_data, client_data_lock, action_queue):
     while True: 
         start_time = time.time()
 
-        data = dict(client_data).copy()
+        client_data_sendable = dict(client_data).copy()
         for addr, stats in client_data.items():
-            data[addr].pop('conn', None)
+            client_data_sendable[addr].pop('conn', None)
             
         # Process all actions from the queue
         # while not action_queue.empty():
@@ -79,8 +79,8 @@ def game_loop(client_data, client_data_lock):
 
         # Update all clients
         with client_data_lock:
-            for addr, stats in data.items():
-                send_message(client_data[addr]['conn'], [data], False)
+            for addr, stats in client_data_sendable.items():
+                send_message(client_data[addr]['conn'], [client_data_sendable], False)
 
         # Wait until the next tick
         elapsed = time.time() - start_time
@@ -88,13 +88,16 @@ def game_loop(client_data, client_data_lock):
             time.sleep(TICK_RATE - elapsed)
     ...
 
-def handle_client(conn, addr, client_data, client_data_lock):
+def handle_client(conn, addr, client_data, client_data_lock, action_queue):
     print(f"Connection with {addr[0]} on port {addr[1]} started...")
     conn.settimeout(5.0)
 
-    send_message(conn, f"{addr[0]}:{addr[1]}")
+    username = f"{addr[0]}:{addr[1]}"
+
+    send_message(conn, username)
 
     stats = {
+                'user' : username,
                 'x' : 0,
                 'y' : 0,
                 'nme' : '',
@@ -108,16 +111,13 @@ def handle_client(conn, addr, client_data, client_data_lock):
             }
     
     with client_data_lock:
-        client_data[f"{addr[0]}:{addr[1]}"] = stats
+        client_data[username] = stats
 
     start_time = time.time()
 
     while True:
         try:
-            stats = client_data[f"{addr[0]}:{addr[1]}"]
-
-            # if stats['hlth'] <= 0:
-            #     stats['hlth'] = 10
+            stats = client_data[username]
 
             data = get_message(conn, False)
             
@@ -136,39 +136,40 @@ def handle_client(conn, addr, client_data, client_data_lock):
 
                 with client_data_lock:
                     client_data[data[0]['hit']] = enemy_stats
-                print(client_data[data[0]['hit']]['hlth'])
+                # print(client_data[data[0]['hit']]['hlth'])
 
                 start_time = time.time()
 
             with client_data_lock:
-                client_data[f"{addr[0]}:{addr[1]}"] = stats
+                client_data[username] = stats
 
             # send_message(conn, [dict(client_data)], False)
         except (TimeoutError, EOFError, KeyError, ConnectionResetError) as e:
-            print(f"Error processing data from {addr[0]}:{addr[1]}: {e}")
+            print(f"Error processing data from {username}: {e}")
             break
 
-    client_data.pop(f"{addr[0]}:{addr[1]}", None)
+    client_data.pop(username, None)
     print(f"Connection with {addr[0]} on port {addr[1]} finished...")
 
 def start_server():
     client_data_lock = multiprocessing.Lock()
     manager = multiprocessing.Manager()
 
-    client_stats = manager.dict()
+    client_data = manager.dict()
+    action_queue = manager.Queue()
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen()
         print(f"Server listening on {HOST}:{PORT}")
 
-        # multiprocessing.Process(target=get_status, args=(client_stats,)).start()
-        multiprocessing.Process(target=game_loop, args=(client_stats, client_data_lock)).start()
+        # multiprocessing.Process(target=get_status, args=(client_data,)).start()
+        multiprocessing.Process(target=game_loop, args=(client_data, client_data_lock, action_queue)).start()
 
         while True:
             try:
                 conn, addr = s.accept()
-                multiprocessing.Process(target=handle_client, args=(conn, addr, client_stats, client_data_lock)).start()
+                multiprocessing.Process(target=handle_client, args=(conn, addr, client_data, client_data_lock, action_queue)).start()
             except KeyboardInterrupt:
                 print("Server shutting down...")
                 break
