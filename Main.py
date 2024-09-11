@@ -65,7 +65,7 @@ def game_loop(player, shared_memory):
                                'nme' : player.name,
                                'hit' : player.hit}
         
-        player.attack_reset()
+        # player.attack_reset()
 
     shared_memory['running'] = False
     raylib.CloseWindow()

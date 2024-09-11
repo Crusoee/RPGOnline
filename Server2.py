@@ -54,9 +54,14 @@ def get_status(client_data):
         time.sleep(20)
         print("Amount of Players: ", len(client_data))
 
-def game_loop(client_data, client_data_lock, connections):
+def game_loop(client_data, client_data_lock):
     while True: 
         start_time = time.time()
+
+        data = dict(client_data).copy()
+        for addr, stats in client_data.items():
+            data[addr].pop('conn', None)
+            
         # Process all actions from the queue
         # while not action_queue.empty():
         #     action = action_queue.get()
@@ -74,9 +79,8 @@ def game_loop(client_data, client_data_lock, connections):
 
         # Update all clients
         with client_data_lock:
-            print(connections.keys())
-            # for address, conn in connections.keys():
-            #     send_message(connections[address], [dict(client_data)], False)
+            for addr, stats in data.items():
+                send_message(client_data[addr]['conn'], [data], False)
 
         # Wait until the next tick
         elapsed = time.time() - start_time
@@ -99,7 +103,8 @@ def handle_client(conn, addr, client_data, client_data_lock):
                 'arm' : 0,
                 'hlth' : 10,
                 'hit' : '',
-                'ats' : .5
+                'ats' : .5,
+                'conn' : conn
             }
     
     with client_data_lock:
@@ -138,7 +143,7 @@ def handle_client(conn, addr, client_data, client_data_lock):
             with client_data_lock:
                 client_data[f"{addr[0]}:{addr[1]}"] = stats
 
-            send_message(conn, [dict(client_data)], False)
+            # send_message(conn, [dict(client_data)], False)
         except (TimeoutError, EOFError, KeyError, ConnectionResetError) as e:
             print(f"Error processing data from {addr[0]}:{addr[1]}: {e}")
             break
@@ -151,20 +156,18 @@ def start_server():
     manager = multiprocessing.Manager()
 
     client_stats = manager.dict()
-    connections = manager.dict()
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen()
         print(f"Server listening on {HOST}:{PORT}")
 
-        multiprocessing.Process(target=get_status, args=(client_stats,)).start()
-        # multiprocessing.Process(target=game_loop, args=(client_stats, client_data_lock, connections)).start()
+        # multiprocessing.Process(target=get_status, args=(client_stats,)).start()
+        multiprocessing.Process(target=game_loop, args=(client_stats, client_data_lock)).start()
 
         while True:
             try:
                 conn, addr = s.accept()
-                connections[f"{addr[0]}:{addr[1]}"] = conn
                 multiprocessing.Process(target=handle_client, args=(conn, addr, client_stats, client_data_lock)).start()
             except KeyboardInterrupt:
                 print("Server shutting down...")

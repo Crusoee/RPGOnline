@@ -15,7 +15,8 @@ class Player():
         self.stats = {'dmg' : 1,
             'mgc' : 0,
             'arm' : 0,
-            'hlth' : 10}
+            'hlth' : 10,
+            'hit' : ''}
         self.attacking = False
         self.respawn = False
 
@@ -138,8 +139,8 @@ class Player():
                 if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
                     self.attacking = True
                     self.hit = key
-                    # print(self.hit)
-                    break
+                    return
+            self.hit = ''
 
     def attack_reset(self):
         self.attacking = False
