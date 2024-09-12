@@ -55,45 +55,49 @@ def get_status(client_data):
         print("Amount of Players: ", len(client_data))
 
 def game_loop(client_updates, client_data_lock, action_queue, client_info):
-        while True: 
-            try:    
-                start_time = time.time()
-                    
-                # Process all actions from the queue
-                while not action_queue.empty():
-                    action = action_queue.get()
-                    target = client_info[action['target']]
-                    attacker = client_info[action['attacker']]
+    while True: 
+        try:    
+            start_time = time.time()
+                
+            # Process actions
+            while not action_queue.empty():
+                action = action_queue.get()
+                target = client_info[action['target']]
+                attacker = client_info[action['attacker']]
 
-                    if attacker['atc'] < attacker['ats']:
-                        attacker['atc'] += 1
+                # Player attack
+                if action['type'] == 'attack' and attacker['atc'] >= attacker['ats']:
+                    target['hlth'] -= attacker['dmg']
+                    attacker['atc'] = 0
 
-                    # Player attack
-                    if action['type'] == 'attack' and attacker['atc'] >= attacker['ats']:
-                        target['hlth'] -= attacker['dmg']
-                        attacker['atc'] = 0
-
-                    with client_data_lock:
-                        client_info[action['target']] = target
-                        client_info[action['attacker']] = attacker
-
-                # Update all clients
                 with client_data_lock:
-                    # making a sendable copy of client data that doesn't have the socket connection
-                    client_info_sendable = dict(client_info)
-                    for key, value in client_info_sendable.items():
-                        client_info_sendable[key].pop('conn', None)
-                    for addr, stats in client_info_sendable.items():
-                        # sending 2 messages to all clients with both updates and info on other clients
-                        send_message(client_info[addr]['conn'], [dict(client_updates)], False)
-                        send_message(client_info[addr]['conn'], [client_info_sendable], False)
+                    client_info[action['target']] = target
+                    client_info[action['attacker']] = attacker
 
-                # Wait until the next tick
-                elapsed = time.time() - start_time
-                if elapsed < TICK_RATE:
-                    time.sleep(TICK_RATE - elapsed)
-            except (TimeoutError, EOFError, KeyError, ConnectionResetError, ConnectionAbortedError) as e:
-                print(f"Error processing data: {e}")
+            # client tick updates
+            for addr, stats in client_info.items():
+                client = client_info[addr]
+                if client['atc'] < client['ats']:
+                    client['atc'] += 1
+                client_info[addr] = client
+
+            # Update all clients
+            with client_data_lock:
+                # making a sendable copy of client data that doesn't have the socket connection
+                client_info_sendable = dict(client_info)
+                for key, value in client_info_sendable.items():
+                    client_info_sendable[key].pop('conn', None)
+                for addr, stats in client_info_sendable.items():
+                    # sending 2 messages to all clients with both updates and info on other clients
+                    send_message(client_info[addr]['conn'], [dict(client_updates)], False)
+                    send_message(client_info[addr]['conn'], [client_info_sendable], False)
+
+            # Wait until the next tick
+            elapsed = time.time() - start_time
+            if elapsed < TICK_RATE:
+                time.sleep(TICK_RATE - elapsed)
+        except (TimeoutError, EOFError, KeyError, ConnectionResetError, ConnectionAbortedError) as e:
+            print(f"Error processing data: {e}")
 
 def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info):
     print(f"Connection with {addr[0]} on port {addr[1]} started...")

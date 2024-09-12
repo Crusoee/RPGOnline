@@ -49,6 +49,7 @@ def client_communication_loop(shared_memory):
     print("Connected to the server")
 
     shared_memory['user'] = get_message(s)
+    print(shared_memory['user'])
 
     while shared_memory['running']:
         # send_message(s, [int(shared_memory['player'][0]), int(shared_memory['player'][1]), int(shared_memory['player'][2]), int(shared_memory['player'][3]), int(shared_memory['player'][4]), int(shared_memory['player'][5])],False)
