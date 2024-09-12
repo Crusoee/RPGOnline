@@ -3,9 +3,7 @@ import multiprocessing
 import pickle
 import zlib
 import time
-
-
-from SimplexNoise import simplex_noise
+import random
 
 # Constants
 HOST = "0.0.0.0"
@@ -67,7 +65,9 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
 
                 # Player attack
                 if action['type'] == 'attack' and attacker['atc'] >= attacker['ats']:
-                    target['hlth'] -= attacker['dmg']
+                    # Damage Calculation
+                    target['hlth'] -= attacker['dmg'] * ((random.randint(1,100)*.01) * (attacker['crit'] - 1))
+                    # Reset attack Counter
                     attacker['atc'] = 0
 
                 with client_data_lock:
@@ -76,9 +76,20 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
 
             # client tick updates
             for addr, stats in client_info.items():
+
                 client = client_info[addr]
+
+                # Melee Attacking
                 if client['atc'] < client['ats']:
                     client['atc'] += 1
+
+                # Respawning
+                if client['hlth'] <= 0:
+                    client['rescntr'] += 1
+                    if client['rescntr'] >= client['ress']:
+                        client['hlth'] = client['mhlth']
+                        client['rescntr'] = 0
+
                 client_info[addr] = client
 
             # Update all clients
@@ -116,13 +127,25 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
     info = {
                 'user' : username,
-                'dmg' : 1,
+
+                'dmg' : 10,
+                'crit' : 2,
+
                 'mgc' : 0,
+
                 'arm' : 0,
-                'hlth' : 10,
+
+                'hlth' : 100,
+                'mhlth' : 100,
+
                 'hit' : '',
+
                 'ats' : 60,
                 'atc' : 60,
+
+                'ress' : 600,
+                'rescntr' : 0,
+
                 'conn' : conn
             }
     
