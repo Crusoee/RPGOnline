@@ -148,6 +148,11 @@ class Player():
                 if length < 150.0 * raylib.GetFrameTime():
                     self.coordinate = None
 
+
+        if raylib.IsKeyPressed(raylib.KEY_V):
+            self.respawn.x = self.locsize.x
+            self.respawn.y = self.locsize.y
+
         self.camera.target.x = self.locsize.x
         self.camera.target.y = self.locsize.y
 
