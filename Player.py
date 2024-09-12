@@ -1,7 +1,7 @@
 import raylib
 import pyray as rl
 import math
-from Helper import get_rectangle
+from Helper import get_rectangle, distance
 
 from SimplexNoise import simplex_noise
 import Render
@@ -27,7 +27,10 @@ class Player():
                             'hit' : ''
                         }
         
+        self.distance = 500
+        
         self.attacking = False
+        self.pursuing = False
         self.respawn = False
 
         self.speed = speed
@@ -51,6 +54,8 @@ class Player():
         if self.coordinate != None:
             raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
         rl.draw_text(self.name, int(self.locsize.x - (len(self.name) // 2)), int(self.locsize.y - 20), 20, rl.GREEN)
+        if self.attacking == True:
+            rl.draw_circle(int(self.locsize.x),int(self.locsize.y),self.distance,rl.Color(255,255,0,100))
 
     def collision(self, collidable_objects):
         for object in collidable_objects:
@@ -77,20 +82,24 @@ class Player():
                     print("bottom")
                     break
 
-    def move(self, chunk_data):
-
+    def move(self, chunk_data, shared_memory):
+        
+        # If your health is 0, respawn: NEEDS TO BE EXPOUNDED
         if self.stats['hlth'] <= 0:
             self.locsize.x = 0
             self.locsize.y = 0
 
-        value = simplex_noise(self.locsize.x // TILE_SIZE, 
-                        self.locsize.y // TILE_SIZE)
+        # The current noise level your character is standing on
+        value = simplex_noise((self.locsize.x - self.base.x) // TILE_SIZE, 
+                        (self.locsize.y - self.base.y) // TILE_SIZE)
 
+        # Changing the speed of your player
         if value < Render.water:
             self.speed = 150
         else:
             self.speed = 300
 
+        # If you press the right mouse button, set coordinate to that location to move
         if raylib.IsMouseButtonDown(raylib.MOUSE_BUTTON_RIGHT):
             mouse_position_window = rl.get_mouse_position()
             self.coordinate = rl.Vector2(
@@ -98,7 +107,8 @@ class Player():
                 (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
             )
         
-        if self.coordinate != None:
+        # moving depending on if there is a coordinate to follow
+        if self.coordinate != None and self.attacking == False:
             displaced = rl.Vector2(self.coordinate.x - self.locsize.x + self.base.x, self.coordinate.y - self.locsize.y + self.base.y)
             length = math.sqrt(displaced.x**2 + displaced.y**2)
             if length != 0:
@@ -116,21 +126,6 @@ class Player():
         self.prev_locsize = self.locsize
 
     def select(self, shared_memory):
-        if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_LEFT):
-            mouse_position_window = rl.get_mouse_position()
-            select_coordinate = rl.Vector2(
-                (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
-                (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
-            )
-
-            for key, value in shared_memory['playersupdate'][0].items():
-                if key == shared_memory['user']:
-                    continue
-
-                player = shared_memory['playersupdate'][0][key]
-
-                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
-                    print(f'{player['hlth']}, {player['dmg']}, {player['mgc']}, {player['arm']}')
 
         if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_RIGHT):
             
@@ -146,17 +141,39 @@ class Player():
 
                 player = shared_memory['playersupdate'][0][key]
 
-                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
+                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)) and \
+                    distance(self.locsize.x, self.locsize.y,player['x'],player['y']) < self.distance:
+                    self.coordinate = rl.Vector2(shared_memory['playersupdate'][0][key]['x'],shared_memory['playersupdate'][0][key]['y'])
+                    self.attacking = True
+
+
                     self.action['type'] = 'attack'
                     self.action['target'] = key
                     self.action['x'] = None
                     self.action['y'] = None
                     return
-                
+            
+            self.attacking = False
             self.action['type'] = None
             self.action['target'] = None
             self.action['x'] = None
             self.action['y'] = None
+
+        if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_LEFT):
+            mouse_position_window = rl.get_mouse_position()
+            select_coordinate = rl.Vector2(
+                (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
+                (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
+            )
+
+            for key, value in shared_memory['playersupdate'][0].items():
+                if key == shared_memory['user']:
+                    continue
+
+                player = shared_memory['playersupdate'][0][key]
+
+                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
+                    print(f'{player['hlth']}, {player['dmg']}, {player['mgc']}, {player['arm']}')
 
     def attack_reset(self):
         self.attacking = False

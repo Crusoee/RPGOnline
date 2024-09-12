@@ -52,14 +52,13 @@ def game_loop(player, shared_memory):
         # Updating Player Stats
         player.update(shared_memory)
 
-        # Moving and Colliding Player
-        player.move(chunk_data)
-
         # Gui/World Interaction
         player.select(shared_memory)
 
+        # Moving and Colliding Player
+        player.move(chunk_data, shared_memory)
 
-        # updating my current coordinates for other players
+        # updating my current coordinates to the server
         shared_memory['player'] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
                                'nme' : player.name,

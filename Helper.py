@@ -16,4 +16,4 @@ def dict_set(setto, setfrom, setlist):
     return setto
 
 def distance(x1,y1,x2,y2):
-    return abs(math.sqrt(x1**2 + y1**2) - math.sqrt(x2**2 + y2**2))
+    return math.sqrt(abs((x2 - x1)**2 + (y2 - y1)**2))
