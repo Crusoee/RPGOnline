@@ -54,74 +54,63 @@ def get_status(client_data):
         time.sleep(20)
         print("Amount of Players: ", len(client_data))
 
-def game_loop(client_data, client_data_lock, action_queue, client_stats):
-    # try:
+def game_loop(client_updates, client_data_lock, action_queue, client_info):
         while True: 
-            start_time = time.time()
-                
-            # Process all actions from the queue
-            while not action_queue.empty():
-                action = action_queue.get()
-                target = client_stats[action['target']]
-                attacker = client_stats[action['attacker']]
-
-                if attacker['atc'] < attacker['ats']:
-                    attacker['atc'] += 1
-
-                # Player attack
-                if action['type'] == 'attack' and attacker['atc'] >= attacker['ats']:
-                    # if action['target'] in client_data and action['attacker'] in client_data:
+            try:    
+                start_time = time.time()
                     
-                    # damage = action['damage']
+                # Process all actions from the queue
+                while not action_queue.empty():
+                    action = action_queue.get()
+                    target = client_info[action['target']]
+                    attacker = client_info[action['attacker']]
 
-                    target['hlth'] -= attacker['dmg']
+                    if attacker['atc'] < attacker['ats']:
+                        attacker['atc'] += 1
 
+                    # Player attack
+                    if action['type'] == 'attack' and attacker['atc'] >= attacker['ats']:
+                        target['hlth'] -= attacker['dmg']
+                        attacker['atc'] = 0
 
-                    attacker['atc'] = 0
+                    with client_data_lock:
+                        client_info[action['target']] = target
+                        client_info[action['attacker']] = attacker
 
-
+                # Update all clients
                 with client_data_lock:
-                    client_stats[action['target']] = target
-                    client_stats[action['attacker']] = attacker
+                    # making a sendable copy of client data that doesn't have the socket connection
+                    client_info_sendable = dict(client_info)
+                    for key, value in client_info_sendable.items():
+                        client_info_sendable[key].pop('conn', None)
+                    for addr, stats in client_info_sendable.items():
+                        # sending 2 messages to all clients with both updates and info on other clients
+                        send_message(client_info[addr]['conn'], [dict(client_updates)], False)
+                        send_message(client_info[addr]['conn'], [client_info_sendable], False)
 
-            normal_stats = dict(client_stats)
-            client_data_sendable = dict(client_data)
+                # Wait until the next tick
+                elapsed = time.time() - start_time
+                if elapsed < TICK_RATE:
+                    time.sleep(TICK_RATE - elapsed)
+            except (TimeoutError, EOFError, KeyError, ConnectionResetError, ConnectionAbortedError) as e:
+                print(f"Error processing data: {e}")
 
-            try:
-                # making a sendable copy of client data that doesn't have the socket connection
-                for key, value in client_data_sendable.items():
-                    client_data_sendable[key].update(normal_stats[key])
-                    client_data_sendable[key].pop('conn', None)
-            except (KeyError) as e:
-                print("Error: ", e)
-                
-            # Update all clients
-            with client_data_lock:
-                for addr, stats in client_data_sendable.items():
-                    send_message(client_stats[addr]['conn'], [client_data_sendable], False)
-
-            # Wait until the next tick
-            elapsed = time.time() - start_time
-            if elapsed < TICK_RATE:
-                time.sleep(TICK_RATE - elapsed)
-    # except (KeyError) as e:
-    #     print("Errors!!: ", e)
-
-def handle_client(conn, addr, client_data, client_data_lock, action_queue, client_stats):
+def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info):
     print(f"Connection with {addr[0]} on port {addr[1]} started...")
     conn.settimeout(5.0)
 
     username = f"{addr[0]}:{addr[1]}"
 
+    # sending them their user name in the server
     send_message(conn, username)
 
-    zdata =  {
+    updates =  {
                 'x' : 0,
                 'y' : 0,
                 'nme' : '',
             }
 
-    stats = {
+    info = {
                 'user' : username,
                 'dmg' : 1,
                 'mgc' : 0,
@@ -133,42 +122,44 @@ def handle_client(conn, addr, client_data, client_data_lock, action_queue, clien
                 'conn' : conn
             }
     
-    with client_data_lock:
-        client_data[username] = zdata
-        client_stats[username] = stats
+    # setting up client
+    client_updates[username] = updates
+    client_info[username] = info
 
     while True:
         try:
-            stats = client_data[username]
+            # creating a mutable copy of client data
+            info = client_updates[username]
 
-            data = get_message(conn, False)
+            # get the message from the client
+            updates = get_message(conn, False)
             
-            if data in [0, None]:
+            if updates in [0, None]:
                 break
 
             # Stats that the server trusts from the client
-            stats['x'] = data[0]['x']
-            stats['y'] = data[0]['y']
-            stats['nme'] = data[0]['nme']
+            info['x'] = updates[0]['x']
+            info['y'] = updates[0]['y']
+            info['nme'] = updates[0]['nme']
 
-            # print(data[0])
-            
-            if data[0]['action']['type'] != None:
-                data[0]['action']['attacker'] = username
-                action_queue.put(data[0]['action'])
+            # If an action is created by the client, add it to the queue
+            if updates[0]['action']['type'] != None:
+                updates[0]['action']['attacker'] = username
+                action_queue.put(updates[0]['action'])
 
-            with client_data_lock:
-                client_data[username] = stats
+            # Finally, update the client_updates dict
+            client_updates[username] = info
 
         except (TimeoutError, EOFError, KeyError, ConnectionResetError) as e:
             print(f"Error processing data from {username}: {e}")
             break
 
-    client_data.pop(username, None)
+    client_updates.pop(username, None)
+    client_info.pop(username, None)
     print(f"Connection with {addr[0]} on port {addr[1]} finished...")
 
 def start_server():
-    client_data_lock = multiprocessing.Lock()
+    client_stats_lock = multiprocessing.Lock()
     manager = multiprocessing.Manager()
 
     client_data = manager.dict()
@@ -181,12 +172,12 @@ def start_server():
         print(f"Server listening on {HOST}:{PORT}")
 
         # multiprocessing.Process(target=get_status, args=(client_data,)).start()
-        multiprocessing.Process(target=game_loop, args=(client_data, client_data_lock, action_queue, client_stats)).start()
+        multiprocessing.Process(target=game_loop, args=(client_data, client_stats_lock, action_queue, client_stats)).start()
 
         while True:
             try:
                 conn, addr = s.accept()
-                multiprocessing.Process(target=handle_client, args=(conn, addr, client_data, client_data_lock, action_queue, client_stats)).start()
+                multiprocessing.Process(target=handle_client, args=(conn, addr, client_data, client_stats_lock, action_queue, client_stats)).start()
             except KeyboardInterrupt:
                 print("Server shutting down...")
                 break

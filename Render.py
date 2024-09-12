@@ -69,13 +69,13 @@ def draw_tiles(player, chunk_data, tiles):
                     rl.draw_texture(tile_texture, tile_draw_x, tile_draw_y, rl.WHITE)
 
 def draw_players(shared_memory):
-    for key, value in shared_memory['players'][0].items():
+    for key, value in shared_memory['playersupdate'][0].items():
         if key == shared_memory['user']:
             continue
 
         try:
-            player = shared_memory['players'][0][key]
-            print(shared_memory['player']['action']['target'], key)
+            player = shared_memory['playersupdate'][0][key]
+            # print(shared_memory['player']['action']['target'], key)
             if key == shared_memory['player']['action']['target']:
                 raylib.DrawRectangle(int(player['x']), int(player['y']), 40, 80, rl.RED)
                 rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)

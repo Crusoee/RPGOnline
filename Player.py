@@ -123,11 +123,11 @@ class Player():
                 (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
             )
 
-            for key, value in shared_memory['players'][0].items():
+            for key, value in shared_memory['playersupdate'][0].items():
                 if key == shared_memory['user']:
                     continue
 
-                player = shared_memory['players'][0][key]
+                player = shared_memory['playersupdate'][0][key]
 
                 if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
                     print(f'{player['hlth']}, {player['dmg']}, {player['mgc']}, {player['arm']}')
@@ -140,11 +140,11 @@ class Player():
                 (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
             )
 
-            for key, value in shared_memory['players'][0].items():
+            for key, value in shared_memory['playersupdate'][0].items():
                 if key == shared_memory['user']:
                     continue
 
-                player = shared_memory['players'][0][key]
+                player = shared_memory['playersupdate'][0][key]
 
                 if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
                     self.action['type'] = 'attack'
@@ -164,8 +164,8 @@ class Player():
 
     def update(self, shared_memory):
         # If my user name that the server recognizes my client as, has my stats in its player database, give me those stats
-        if shared_memory['user'] in shared_memory['players'][0].keys():
-            stats = shared_memory['players'][0][shared_memory['user']]
+        if shared_memory['user'] in shared_memory['playersinfo'][0].keys():
+            stats = shared_memory['playersinfo'][0][shared_memory['user']]
 
             self.stats['hlth'] = stats['hlth']
             self.stats['dmg'] = stats['dmg']

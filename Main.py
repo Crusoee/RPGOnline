@@ -92,7 +92,8 @@ def main() -> int:
                                'y' : player.locsize.y,
                                'nme' : name,
                                'hit' : player.action}
-    shared_memory["players"] = manager.list([{}])  # Use a managed list for nested data
+    shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
+    shared_memory["playersinfo"] = manager.list([{}])
     shared_memory["user"] = ""
     shared_memory["stats"] = player.stats
     shared_memory["running"] = True
