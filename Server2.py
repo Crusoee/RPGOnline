@@ -66,9 +66,12 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
                 # Player attack
                 if action['type'] == 'attack' and attacker['atc'] >= attacker['ats']:
                     # Damage Calculation
-                    target['hlth'] -= attacker['dmg'] * ((random.randint(1,100)*.01) * (attacker['crit'] - 1))
+                    target['hlth'] -= attacker['dmg'] + ((random.randint(1,100)*.01) * (attacker['crit']))
                     # Reset attack Counter
                     attacker['atc'] = 0
+
+                    if target['hlth'] <= 0:
+                        attacker['crit'] += .5
 
                 with client_data_lock:
                     client_info[action['target']] = target
@@ -128,7 +131,7 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
     info = {
                 'user' : username,
 
-                'dmg' : 10,
+                'dmg' : 15,
                 'crit' : 2,
 
                 'mgc' : 0,

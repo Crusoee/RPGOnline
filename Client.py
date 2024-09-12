@@ -57,6 +57,9 @@ def client_communication_loop(shared_memory):
 
         # shared_memory['stats'] = get_message(s,False)
 
-        shared_memory['playersupdate'] = get_message(s,False)
-        shared_memory['playersinfo'] = get_message(s,False)
+        try:
+            shared_memory['playersupdate'] = get_message(s,False)
+            shared_memory['playersinfo'] = get_message(s,False)
+        except EOFError as e:
+            print(e)
 
