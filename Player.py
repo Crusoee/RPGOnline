@@ -45,7 +45,7 @@ class Player():
         self.prev_locsize = locsize
         self.locsize = locsize
 
-        self.base = rl.Vector2(-locsize.width / 2, -locsize.height)
+        self.base = rl.Vector2(-int(locsize.width / 2), -locsize.height)
         self.coordinate = None
 
         self.camera = rl.Camera2D(
@@ -61,18 +61,18 @@ class Player():
 
         raylib.DrawRectangleRec(self.locsize, self.color)
 
-        if self.coordinate != None:
+        if self.coordinate != None and self.attacking == False:
             raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
 
         rl.draw_text(self.name, int(self.locsize.x - (len(self.name) // 2)), int(self.locsize.y - 20), 20, rl.GREEN)
 
         if self.attacking == True:
-            rl.draw_circle(int(self.locsize.x),int(self.locsize.y),self.distance,rl.Color(255,255,0,100))
+            rl.draw_circle(int(self.locsize.x - self.base.x),int(self.locsize.y - self.base.y / 2),self.distance,rl.Color(255,255,0,100))
 
 
     def collision(self, collidable_objects):
         for object in collidable_objects:
-            if raylib.CheckCollisionPointRec(self.locsize, object):
+            if raylib.CheckCollisionRecs(self.locsize, object):
                 # Left
                 if self.prev_locsize.x + self.prev_locsize.width <= object.x:
                     self.locsize.x = object.x - self.locsize.width
