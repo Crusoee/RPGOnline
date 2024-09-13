@@ -34,8 +34,8 @@ def game_loop(player, shared_memory):
 
         player.draw()
 
-        for jim in chunk_data[int(player.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(player.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1]:
-            raylib.DrawRectangleRec(jim, rl.GREEN)
+        # for jim in chunk_data[int(player.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(player.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1]:
+        #     raylib.DrawRectangleRec(jim, rl.GREEN)
 
         raylib.EndMode2D()
 
@@ -43,7 +43,7 @@ def game_loop(player, shared_memory):
         rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.BLACK)
         # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
         rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
-        rl.draw_text(f"health: {player.stats['hlth']}", 50, 200, 40, rl.BLACK)
+        rl.draw_text(f"health: {player.stats['hlth']}", 50, 200, 40, rl.RED)
 
         raylib.EndDrawing()
 

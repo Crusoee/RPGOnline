@@ -80,7 +80,7 @@ def draw_players(shared_memory):
                 raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.YELLOW)
                 rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
             else:
-                raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.RED)
+                raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.SKYBLUE)
                 rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
         except KeyError as e:
             print("Error Occurred in draw_players: ", e)

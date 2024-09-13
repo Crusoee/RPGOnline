@@ -3,8 +3,8 @@ import raylib
 import math
 from CONSTANTS import PLAYER_HEIGHT, PLAYER_WIDTH
 
-def get_rectangle(data):
-    return rl.Rectangle(data['x'],data['y'],PLAYER_WIDTH,PLAYER_HEIGHT)
+def select_player(data):
+    return rl.Rectangle(data['x'] - 25,data['y'] - 25,PLAYER_WIDTH + 50,PLAYER_HEIGHT + 50)
 
 def dict_set(setto, setfrom, setlist):
     if setlist not in setfrom.keys() or setto not in setfrom.keys():

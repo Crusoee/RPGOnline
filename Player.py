@@ -1,7 +1,7 @@
 import raylib
 import pyray as rl
 import math
-from Helper import get_rectangle, distance
+from Helper import select_player, distance
 
 from SimplexNoise import simplex_noise
 import Render
@@ -35,9 +35,10 @@ class Player():
                             'hit' : ''
                         }
         
-        self.distance = 100
+        self.distance = 50
         
         self.attacking = False
+        self.can_move = True
 
         self.speed = speed
         self.color = color
@@ -66,8 +67,8 @@ class Player():
 
         rl.draw_text(self.name, int(self.locsize.x - (len(self.name) // 2)), int(self.locsize.y - 20), 20, rl.GREEN)
 
-        if self.attacking == True:
-            rl.draw_circle(int(self.locsize.x - self.base.x),int(self.locsize.y - self.base.y / 2),self.distance,rl.Color(255,255,0,100))
+        # if self.attacking == True:
+        #     rl.draw_circle(int(self.locsize.x - self.base.x),int(self.locsize.y - self.base.y / 2),self.distance,rl.Color(255,255,0,100))
 
 
     def collision(self, collidable_objects):
@@ -138,7 +139,7 @@ class Player():
             )
         
         # moving depending on if there is a coordinate to follow
-        if self.coordinate != None:
+        if self.coordinate != None and self.can_move:
             displaced = rl.Vector2(self.coordinate.x - self.locsize.x + self.base.x, self.coordinate.y - self.locsize.y + self.base.y)
             length = math.sqrt(displaced.x**2 + displaced.y**2)
             if length != 0:
@@ -174,7 +175,7 @@ class Player():
 
                 player = shared_memory['playersupdate'][0][key]
 
-                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
+                if raylib.CheckCollisionPointRec(select_coordinate, select_player(player)):
                     self.action['target'] = key
                     return
             
@@ -197,7 +198,7 @@ class Player():
 
                 player = shared_memory['playersupdate'][0][key]
 
-                if raylib.CheckCollisionPointRec(select_coordinate, get_rectangle(player)):
+                if raylib.CheckCollisionPointRec(select_coordinate, select_player(player)):
                     print(f'{player['hlth']}, {player['dmg']}, {player['mgc']}, {player['arm']}')
 
     def attack_reset(self):
