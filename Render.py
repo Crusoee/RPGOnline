@@ -1,6 +1,6 @@
 import pyray as rl
 import raylib as raylib
-from CONSTANTS import NUM_CHUNKS, CHUNK_SIZE, TILE_SIZE
+from CONSTANTS import NUM_CHUNKS, CHUNK_SIZE, TILE_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH
 from SimplexNoise import generate_terrain_chunk
 import numpy as np
 
@@ -77,10 +77,10 @@ def draw_players(shared_memory):
             player = shared_memory['playersupdate'][0][key]
             # print(shared_memory['player']['action']['target'], key)
             if key == shared_memory['player']['action']['target']:
-                raylib.DrawRectangle(int(player['x']), int(player['y']), 40, 80, rl.RED)
+                raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.YELLOW)
                 rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
             else:
-                raylib.DrawRectangle(int(player['x']), int(player['y']), 40, 80, rl.RED)
+                raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.RED)
                 rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
         except KeyError as e:
             print("Error Occurred in draw_players: ", e)

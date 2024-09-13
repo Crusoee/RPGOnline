@@ -57,6 +57,8 @@ class Player():
 
     def draw(self):
 
+        # raylib.DrawRectangleRec(self.prev_locsize, rl.BROWN)
+
         raylib.DrawRectangleRec(self.locsize, self.color)
 
         if self.coordinate != None:
@@ -67,32 +69,30 @@ class Player():
         if self.attacking == True:
             rl.draw_circle(int(self.locsize.x),int(self.locsize.y),self.distance,rl.Color(255,255,0,100))
 
+
     def collision(self, collidable_objects):
         for object in collidable_objects:
-            if raylib.CheckCollisionRecs(self.locsize, object):
-                
+            if raylib.CheckCollisionPointRec(self.locsize, object):
                 # Left
                 if self.prev_locsize.x + self.prev_locsize.width <= object.x:
                     self.locsize.x = object.x - self.locsize.width
-                    print("left")
-                    break
+                    return
                 # Right
                 if self.prev_locsize.x >= object.x + object.width:
                     self.locsize.x = object.x + object.width
-                    print("right")
-                    break
+                    return
                 # Top
                 if self.prev_locsize.y + self.prev_locsize.height <= object.y:
                     self.locsize.y = object.y - self.locsize.height
-                    print("top")
-                    break
+                    return
                 # Bottom
                 if self.prev_locsize.y >= object.y + object.height:
                     self.locsize.y = object.y + object.height
-                    print("bottom")
-                    break
+                    return
 
     def move(self, chunk_data, shared_memory):
+
+        self.prev_locsize = rl.Rectangle(self.locsize.x, self.locsize.y, self.locsize.width, self.locsize.height)
         
         # If your health is 0, respawn: NEEDS TO BE EXPOUNDED
         if self.stats['hlth'] <= 0:
@@ -157,8 +157,6 @@ class Player():
         self.camera.target.y = self.locsize.y
 
         self.collision(chunk_data[int(self.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(self.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1])
-
-        self.prev_locsize = self.locsize
 
     def select(self, shared_memory):
 

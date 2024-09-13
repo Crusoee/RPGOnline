@@ -1,9 +1,10 @@
 import pyray as rl
 import raylib
 import math
+from CONSTANTS import PLAYER_HEIGHT, PLAYER_WIDTH
 
 def get_rectangle(data):
-    return rl.Rectangle(data['x'],data['y'],40,80)
+    return rl.Rectangle(data['x'],data['y'],PLAYER_WIDTH,PLAYER_HEIGHT)
 
 def dict_set(setto, setfrom, setlist):
     if setlist not in setfrom.keys() or setto not in setfrom.keys():

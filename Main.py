@@ -4,7 +4,7 @@ import multiprocessing
 import random
 
 from Player import Player
-from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS
+from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS, PLAYER_WIDTH,PLAYER_HEIGHT
 from Client import client_communication_loop
 import Render
 
@@ -34,8 +34,8 @@ def game_loop(player, shared_memory):
 
         player.draw()
 
-        # for jim in chunk_data[int(player.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(player.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1]:
-        #     raylib.DrawRectangleRec(jim, rl.GREEN)
+        for jim in chunk_data[int(player.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(player.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1]:
+            raylib.DrawRectangleRec(jim, rl.GREEN)
 
         raylib.EndMode2D()
 
@@ -63,8 +63,6 @@ def game_loop(player, shared_memory):
                                'y' : player.locsize.y,
                                'nme' : player.name,
                                'action' : player.action}
-        
-        # player.attack_reset()
 
     shared_memory['running'] = False
     raylib.CloseWindow()
@@ -83,7 +81,7 @@ def main() -> int:
     ]
     name = names[random.randint(0,len(names)-1)]
 
-    player = Player(rl.SKYBLUE, rl.Rectangle(0, 0, 40, 80), 500, name)
+    player = Player(rl.SKYBLUE, rl.Rectangle(0, 0, PLAYER_WIDTH, PLAYER_HEIGHT), 500, name)
     
     manager = multiprocessing.Manager()
     shared_memory = manager.dict()
