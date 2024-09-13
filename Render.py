@@ -75,12 +75,20 @@ def draw_players(shared_memory):
 
         try:
             player = shared_memory['playersupdate'][0][key]
-            # print(shared_memory['player']['action']['target'], key)
-            if key == shared_memory['player']['action']['target']:
-                raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.YELLOW)
-                rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
+            if player['swim'] == True:
+                if key == shared_memory['player']['action']['target']:
+                    raylib.DrawRectangle(int(player['x']), int(player['y']) + PLAYER_HEIGHT // 2, PLAYER_WIDTH, PLAYER_HEIGHT // 2, rl.YELLOW)
+                    rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
+                else:
+                    raylib.DrawRectangle(int(player['x']), int(player['y']) + PLAYER_HEIGHT // 2, PLAYER_WIDTH, PLAYER_HEIGHT // 2, rl.SKYBLUE)
+                    rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
             else:
-                raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.SKYBLUE)
-                rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
+                # print(shared_memory['player']['action']['target'], key)
+                if key == shared_memory['player']['action']['target']:
+                    raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.YELLOW)
+                    rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
+                else:
+                    raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.SKYBLUE)
+                    rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
         except KeyError as e:
             print("Error Occurred in draw_players: ", e)

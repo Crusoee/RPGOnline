@@ -4,6 +4,7 @@ import pickle
 import zlib
 import time
 import random
+import os
 
 # Constants
 HOST = "0.0.0.0"
@@ -64,14 +65,14 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
                 attacker = client_info[action['attacker']]
 
                 # Player attack
-                if action['type'] == 'attack' and attacker['atc'] >= attacker['ats'] and attacker['hlth'] > 0:
+                if action['type'] == 'attack' and attacker['atc'] >= attacker['ats'] and attacker['hlth'] > 0 and target['hlth'] > 0:
                     # Damage Calculation
                     target['hlth'] -= attacker['dmg'] + ((random.randint(1,100)*.01) * (attacker['crit']))
                     # Reset attack Counter
                     attacker['atc'] = 0
 
-                    # if target['hlth'] <= 0:
-                    #     attacker['crit'] += .5
+                    if target['hlth'] <= 0:
+                        attacker['killcount'] += 1
 
                 with client_data_lock:
                     client_info[action['target']] = target
@@ -99,8 +100,8 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
             with client_data_lock:
                 # making a sendable copy of client data that doesn't have the socket connection
                 client_info_sendable = dict(client_info)
-                for key, value in client_info_sendable.items():
-                    client_info_sendable[key].pop('conn', None)
+                for addr, value in client_info_sendable.items():
+                    client_info_sendable[addr].pop('conn', None)
                 for addr, stats in client_info_sendable.items():
                     # sending 2 messages to all clients with both updates and info on other clients
                     send_message(client_info[addr]['conn'], [dict(client_updates)], False)
@@ -119,6 +120,14 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
     username = f"{addr[0]}:{addr[1]}"
 
+    # files = os.walk("ServerDB")
+    # if username in files:
+    #     with open(f"ServerDB\\{username}.pl", "r") as f:
+    #         for line in f.readlines()
+    # else:
+    #     with open(f"ServerDB\\{username}.pl", "w") as f:
+    #         for line in f.write(f"0,0,,{username},15,2,0,0,100,100,")
+
     # sending them their user name in the server
     send_message(conn, username)
 
@@ -126,6 +135,7 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'x' : 0,
                 'y' : 0,
                 'nme' : '',
+                'swim' : False
             }
 
     info = {
@@ -149,6 +159,11 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'ress' : 600,
                 'rescntr' : 0,
 
+                'speed' : 300,
+                'swmspeed' : 150,
+
+                'killcount' : 0,
+
                 'conn' : conn
             }
     
@@ -171,6 +186,7 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             info['x'] = updates[0]['x']
             info['y'] = updates[0]['y']
             info['nme'] = updates[0]['nme']
+            info['swim'] = updates[0]['swim']
 
             # If an action is created by the client, add it to the queue
             if updates[0]['action']['type'] != None:

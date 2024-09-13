@@ -62,6 +62,7 @@ def game_loop(player, shared_memory):
         shared_memory['player'] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
                                'nme' : player.name,
+                               'swim' : player.in_water,
                                'action' : player.action}
 
     shared_memory['running'] = False
@@ -88,7 +89,8 @@ def main() -> int:
     shared_memory["player"] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
                                'nme' : name,
-                               'hit' : player.action}
+                               'swim' : player.in_water,
+                               'action' : player.action}
     shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
     shared_memory["playersinfo"] = manager.list([{}])
     shared_memory["user"] = ""

@@ -5,7 +5,7 @@ from Helper import select_player, distance
 
 from SimplexNoise import simplex_noise
 import Render
-from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE
+from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH
 
 EMPTY = {
             'type' : None,
@@ -32,22 +32,26 @@ class Player():
                             'mgc' : 0,
                             'arm' : 0,
                             'hlth' : 10,
-                            'hit' : ''
+                            'hit' : '',
+                            'speed' : 300,
+                            'swmspeed' : 150
                         }
         
         self.distance = 50
         
         self.attacking = False
         self.can_move = True
+        self.in_water = False
 
         self.speed = speed
         self.color = color
 
-        self.prev_locsize = locsize
         self.locsize = locsize
 
         self.base = rl.Vector2(-int(locsize.width / 2), -locsize.height)
         self.coordinate = None
+
+        self.prev_locsize = rl.Vector2(locsize.x - self.base.x,locsize.y - self.base.y)
 
         self.camera = rl.Camera2D(
             rl.Vector2(SCREEN_WIDTH/2, SCREEN_HEIGHT/2),  # Offset from the center of the screen
@@ -59,8 +63,10 @@ class Player():
     def draw(self):
 
         # raylib.DrawRectangleRec(self.prev_locsize, rl.BROWN)
-
-        raylib.DrawRectangleRec(self.locsize, self.color)
+        if self.in_water:
+            raylib.DrawRectangleRec(rl.Rectangle(self.locsize.x,self.locsize.y + PLAYER_HEIGHT / 2,PLAYER_WIDTH,PLAYER_HEIGHT / 2), self.color)
+        else:
+            raylib.DrawRectangleRec(self.locsize, self.color)
 
         if self.coordinate != None and self.attacking == False:
             raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
@@ -73,27 +79,25 @@ class Player():
 
     def collision(self, collidable_objects):
         for object in collidable_objects:
-            if raylib.CheckCollisionRecs(self.locsize, object):
+            if raylib.CheckCollisionPointRec(rl.Vector2(self.locsize.x - self.base.x,self.locsize.y - self.base.y), object):
+
                 # Left
-                if self.prev_locsize.x + self.prev_locsize.width <= object.x:
-                    self.locsize.x = object.x - self.locsize.width
-                    return
+                if self.prev_locsize.x <= object.x:
+                    self.locsize.x = object.x + self.base.x
                 # Right
                 if self.prev_locsize.x >= object.x + object.width:
-                    self.locsize.x = object.x + object.width
-                    return
+                    self.locsize.x = object.x + object.width + self.base.x
+
                 # Top
-                if self.prev_locsize.y + self.prev_locsize.height <= object.y:
-                    self.locsize.y = object.y - self.locsize.height
-                    return
+                if self.prev_locsize.y <= object.y:
+                    self.locsize.y = object.y + self.base.y
                 # Bottom
                 if self.prev_locsize.y >= object.y + object.height:
-                    self.locsize.y = object.y + object.height
-                    return
+                    self.locsize.y = object.y + object.height + self.base.y
 
     def move(self, chunk_data, shared_memory):
 
-        self.prev_locsize = rl.Rectangle(self.locsize.x, self.locsize.y, self.locsize.width, self.locsize.height)
+        self.prev_locsize = rl.Vector2(self.locsize.x - self.base.x, self.locsize.y - self.base.y)
         
         # If your health is 0, respawn: NEEDS TO BE EXPOUNDED
         if self.stats['hlth'] <= 0:
@@ -106,9 +110,11 @@ class Player():
 
         # Changing the speed of your player
         if value < Render.water:
-            self.speed = 150
+            self.speed = self.stats['swmspeed']
+            self.in_water = True
         else:
-            self.speed = 300
+            self.speed = self.stats['speed']
+            self.in_water = False
 
         # If there's a target, follow it
         if self.action['target'] and self.action['target'] in shared_memory['playersupdate'][0].keys():
@@ -157,7 +163,7 @@ class Player():
         self.camera.target.x = self.locsize.x
         self.camera.target.y = self.locsize.y
 
-        self.collision(chunk_data[int(self.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(self.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1])
+        self.collision(chunk_data[int((self.locsize.x - self.base.x) // (TILE_SIZE * CHUNK_SIZE)), int((self.locsize.y - self.base.y) // (TILE_SIZE * CHUNK_SIZE))][1])
 
     def select(self, shared_memory):
 
@@ -214,3 +220,5 @@ class Player():
             self.stats['dmg'] = stats['dmg']
             self.stats['mgc'] = stats['mgc']
             self.stats['arm'] = stats['arm']
+            self.stats['speed'] = stats['speed']
+            self.stats['swmspeed'] = stats['swmspeed']
