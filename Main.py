@@ -82,7 +82,7 @@ def main() -> int:
     ]
     name = names[random.randint(0,len(names)-1)]
 
-    player = Player(rl.SKYBLUE, rl.Rectangle(0, 0, PLAYER_WIDTH, PLAYER_HEIGHT), 500, name)
+    player = Player(rl.SKYBLUE, rl.Rectangle(500, 500, PLAYER_WIDTH, PLAYER_HEIGHT), 500, name)
     
     manager = multiprocessing.Manager()
     shared_memory = manager.dict()

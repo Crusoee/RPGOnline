@@ -38,6 +38,7 @@ class Player():
                         }
         
         self.distance = 50
+        self.tracking_distance = 1000
         
         self.attacking = False
         self.can_move = True
@@ -87,7 +88,6 @@ class Player():
                 # Right
                 if self.prev_locsize.x >= object.x + object.width:
                     self.locsize.x = object.x + object.width + self.base.x
-
                 # Top
                 if self.prev_locsize.y <= object.y:
                     self.locsize.y = object.y + self.base.y
@@ -125,7 +125,7 @@ class Player():
             if target_distance < self.distance:
                 self.action['type'] = 'attack'
                 self.coordinate = None
-            elif target_distance > 1500:
+            elif target_distance > self.tracking_distance:
                 self.action = EMPTY
                 self.attacking = False
             else:

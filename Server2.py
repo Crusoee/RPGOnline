@@ -4,7 +4,7 @@ import pickle
 import zlib
 import time
 import random
-import os
+import math
 
 # Constants
 HOST = "0.0.0.0"
@@ -62,21 +62,27 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
             while not action_queue.empty():
                 action = action_queue.get()
                 target = client_info[action['target']]
-                attacker = client_info[action['attacker']]
+                initiator = client_info[action['initiator']]
 
                 # Player attack
-                if action['type'] == 'attack' and attacker['atc'] >= attacker['ats'] and attacker['hlth'] > 0 and target['hlth'] > 0:
+                if action['type'] == 'attack' and initiator['atc'] >= initiator['ats'] and initiator['hlth'] > 0 and target['hlth'] > 0:
                     # Damage Calculation
-                    target['hlth'] -= attacker['dmg'] + ((random.randint(1,100)*.01) * (attacker['crit']))
+                    target['hlth'] -= initiator['dmg'] + (math.log(random.uniform(1e-3, 1)) * (initiator['crit']))
                     # Reset attack Counter
-                    attacker['atc'] = 0
+                    initiator['atc'] = 0
 
                     if target['hlth'] <= 0:
-                        attacker['killcount'] += 1
+                        initiator['killcount'] += 1
+
+                if action['type'] == 'attacknpc':
+                    ...
+
+                if action['type'] == 'loot':
+                    ...
 
                 with client_data_lock:
                     client_info[action['target']] = target
-                    client_info[action['attacker']] = attacker
+                    client_info[action['initiator']] = initiator
 
             # client tick updates
             for addr, stats in client_info.items():
@@ -120,14 +126,6 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
     username = f"{addr[0]}:{addr[1]}"
 
-    # files = os.walk("ServerDB")
-    # if username in files:
-    #     with open(f"ServerDB\\{username}.pl", "r") as f:
-    #         for line in f.readlines()
-    # else:
-    #     with open(f"ServerDB\\{username}.pl", "w") as f:
-    #         for line in f.write(f"0,0,,{username},15,2,0,0,100,100,")
-
     # sending them their user name in the server
     send_message(conn, username)
 
@@ -159,8 +157,8 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'ress' : 600,
                 'rescntr' : 0,
 
-                'speed' : 300,
-                'swmspeed' : 150,
+                'speed' : 200,
+                'swmspeed' : 100,
 
                 'killcount' : 0,
 
@@ -190,7 +188,7 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
             # If an action is created by the client, add it to the queue
             if updates[0]['action']['type'] != None:
-                updates[0]['action']['attacker'] = username
+                updates[0]['action']['initiator'] = username
                 action_queue.put(updates[0]['action'])
 
             # Finally, update the client_updates dict
