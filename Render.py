@@ -1,8 +1,8 @@
 import pyray as rl
 import raylib as raylib
-from CONSTANTS import NUM_CHUNKS, CHUNK_SIZE, TILE_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH
+from CONSTANTS import NUM_CHUNKS, CHUNK_SIZE, TILE_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH, SCREEN_WIDTH
 from SimplexNoise import generate_terrain_chunk
-import numpy as np
+from Helper import distance
 
 water = -.1
 shallow = 0
@@ -92,3 +92,22 @@ def draw_players(shared_memory):
                     rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
         except KeyError as e:
             print("Error Occurred in draw_players: ", e)
+
+def draw_npcs(shared_memory, npc):
+    for key, value in shared_memory['npcs'][0].items():
+        try:
+            rl.draw_texture(npc,value.x,value.y,rl.WHITE)
+        except (KeyError) as e:
+            print("Error: ", e)
+
+def draw_info(player):
+    # rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.BLACK)
+    # rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.BLACK)
+    # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
+    # rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
+    
+    rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 20, rl.RED)
+    rl.draw_text(f"damage: {player.stats['dmg']}", 20, 40, 20, rl.BLACK)
+    # rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 10, rl.RED)
+    # rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 10, rl.RED)
+    # rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 10, rl.RED)

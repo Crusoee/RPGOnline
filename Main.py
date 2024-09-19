@@ -20,6 +20,8 @@ def game_loop(player, shared_memory):
         'forest_tile' : rl.load_texture("topdown_tiles\\Forest.png"),
         'rock_tile' : rl.load_texture("topdown_tiles\\Mountain.png")}
     
+    npc = rl.load_texture("topdown_tiles\\tiles\\beach-shallow0\\curve_in\\0\\0.png")
+    
     chunk_data = {}
 
     while not raylib.WindowShouldClose():
@@ -30,6 +32,8 @@ def game_loop(player, shared_memory):
 
         Render.draw_tiles(player, chunk_data, tiles)
 
+        Render.draw_npcs(shared_memory, npc)
+
         Render.draw_players(shared_memory)
 
         player.draw()
@@ -39,11 +43,13 @@ def game_loop(player, shared_memory):
 
         raylib.EndMode2D()
 
-        rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.BLACK)
-        rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.BLACK)
-        # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
-        rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
-        rl.draw_text(f"health: {player.stats['hlth']}", 50, 200, 40, rl.RED)
+        # rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.BLACK)
+        # rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.BLACK)
+        # # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
+        # rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
+        # rl.draw_text(f"health: {player.stats['hlth']}", 50, 200, 40, rl.RED)
+
+        Render.draw_info(player)
 
         raylib.EndDrawing()
 
@@ -93,6 +99,7 @@ def main() -> int:
                                'action' : player.action}
     shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
     shared_memory["playersinfo"] = manager.list([{}])
+    shared_memory["npcs"] = [{}]
     shared_memory["user"] = ""
     shared_memory["stats"] = player.stats
     shared_memory["running"] = True

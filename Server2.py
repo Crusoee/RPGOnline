@@ -5,6 +5,10 @@ import zlib
 import time
 import random
 import math
+import traceback
+
+from NPC import NPC
+from SimplexNoise import simplex_noise
 
 # Constants
 HOST = "0.0.0.0"
@@ -54,34 +58,73 @@ def get_status(client_data):
         print("Amount of Players: ", len(client_data))
 
 def game_loop(client_updates, client_data_lock, action_queue, client_info):
+    """
+    NPCs
+    TESTING PHASE:
+    This is the NPC dictionary to keep track of all npcs that are in the world currently.
+    I use npc location as a means of giving them Keys so that the server and the client can better
+    communicate what the player is attacking.
+    """
+    npcs = {}
+    for i in range(100):
+        npc = NPC("tree", 60, 0, random.randint(-1000,1000), random.randint(-1000,1000), 64)
+        # the key can be whatever its coordinates are
+        npcs[npc.get_key()] = npc
+
     while True: 
-        try:    
+        try:
+            """
+            start_time keeps tabs on the amount of time it took for a single iteration of this while loop.
+            This is to keep the server running at a constant speed.
+            """
             start_time = time.time()
-                
+            
+
+            """
+            This is the while loop to handle all actions created by the players.
+            This while loop continues until all player actions have been handled. while not action_queue.empty()...
+            """
             # Process actions
             while not action_queue.empty():
+                # Get the next action on the queue
                 action = action_queue.get()
-                target = client_info[action['target']]
+                # Keep tabs on who initiated the action
                 initiator = client_info[action['initiator']]
 
-                # Player attack
-                if action['type'] == 'attack' and initiator['atc'] >= initiator['ats'] and initiator['hlth'] > 0 and target['hlth'] > 0:
+                """
+                If a player attacks another player
+                """
+                if action['type'] == 'attack' and initiator['atc'] >= initiator['ats'] and action['target'] in client_info.keys():
+                    with client_data_lock:
+                        target = client_info[action['target']]
                     # Damage Calculation
                     target['hlth'] -= initiator['dmg'] + (math.log(random.uniform(1e-3, 1)) * (initiator['crit']))
                     # Reset attack Counter
                     initiator['atc'] = 0
-
+                    # Add 1 to a players kill count
                     if target['hlth'] <= 0:
                         initiator['killcount'] += 1
+                    # Reset the target
+                    with client_data_lock:
+                        client_info[action['target']] = target
 
-                if action['type'] == 'attacknpc':
-                    ...
+                """
+                If a player attacks an NPC
+                """
+                if action['type'] == 'attacknpc' and initiator['atc'] >= initiator['ats'] and action['target'] in npcs.keys():
+                    npcs[action['target']].health -= initiator['dmg'] + (math.log(random.uniform(1e-3, 1)) * (initiator['crit']))
+                    # Reset attack Counter
+                    initiator['atc'] = 0
+
+                    # If an npcs health is less than 0
+                    if npcs[action['target']].health < 0:
+                        initiator['dmg'] *= 1.1
+                        npcs.pop(action['target'], None)
 
                 if action['type'] == 'loot':
                     ...
 
                 with client_data_lock:
-                    client_info[action['target']] = target
                     client_info[action['initiator']] = initiator
 
             # client tick updates
@@ -112,13 +155,14 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
                     # sending 2 messages to all clients with both updates and info on other clients
                     send_message(client_info[addr]['conn'], [dict(client_updates)], False)
                     send_message(client_info[addr]['conn'], [client_info_sendable], False)
+                    send_message(client_info[addr]['conn'], [npcs], False)
 
             # Wait until the next tick
             elapsed = time.time() - start_time
             if elapsed < TICK_RATE:
                 time.sleep(TICK_RATE - elapsed)
         except (TimeoutError, EOFError, KeyError, ConnectionResetError, ConnectionAbortedError) as e:
-            print(f"Error processing data: {e}")
+            print(f"Error processing data: {traceback.format_exc()}")
 
 def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info):
     print(f"Connection with {addr[0]} on port {addr[1]} started...")
@@ -187,7 +231,7 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             info['swim'] = updates[0]['swim']
 
             # If an action is created by the client, add it to the queue
-            if updates[0]['action']['type'] != None:
+            if updates[0]['action']['type'] != None and client_info[username]['hlth'] > 0:
                 updates[0]['action']['initiator'] = username
                 action_queue.put(updates[0]['action'])
 

@@ -55,7 +55,7 @@ class Player():
         self.prev_locsize = rl.Vector2(locsize.x - self.base.x,locsize.y - self.base.y)
 
         self.camera = rl.Camera2D(
-            rl.Vector2(SCREEN_WIDTH/2, SCREEN_HEIGHT/2),  # Offset from the center of the screen
+            rl.Vector2(SCREEN_WIDTH/2 - self.locsize.width/2, SCREEN_HEIGHT/2),  # Offset from the center of the screen
             rl.Vector2(self.locsize.x, self.locsize.y),      # The target position in the world
             0.0,                   # Camera rotation in degrees
             1.0                    # Camera zoom (1.0 is default)
@@ -116,8 +116,8 @@ class Player():
             self.speed = self.stats['speed']
             self.in_water = False
 
-        # If there's a target, follow it
-        if self.action['target'] and self.action['target'] in shared_memory['playersupdate'][0].keys():
+        # If there's a player target, follow it
+        if self.action['target'] in shared_memory['playersupdate'][0].keys():
             player = shared_memory['playersupdate'][0][self.action['target']]
             self.action['type'] = None
             self.attacking = True
@@ -132,6 +132,20 @@ class Player():
                 self.action['type'] = None
                 self.coordinate = rl.Vector2(player['x'] - self.base.x, 
                                             player['y'] - self.base.y)
+        # If there's an NPC target, follow it
+        elif self.action['target'] in shared_memory['npcs'][0].keys():
+            self.action['type'] = None
+            self.attacking = True
+            target_distance = distance(self.locsize.x,self.locsize.y, self.action['x'],self.action['y'])
+            if target_distance < self.distance:
+                self.action['type'] = 'attacknpc'
+                self.coordinate = None
+            elif target_distance > self.tracking_distance:
+                self.action = EMPTY
+                self.attacking = False
+            else:
+                self.action['type'] = None
+                self.coordinate = rl.Vector2(self.action['x'] + shared_memory['npcs'][0][self.action['target']].size // 2,self.action['y'] + shared_memory['npcs'][0][self.action['target']].size // 2)            
         else:
             self.action = EMPTY
 
@@ -184,6 +198,14 @@ class Player():
                 if raylib.CheckCollisionPointRec(select_coordinate, select_player(player)):
                     self.action['target'] = key
                     return
+                
+            for key, value in shared_memory['npcs'][0].items():
+                npc = shared_memory['npcs'][0][key]
+                if raylib.CheckCollisionPointRec(select_coordinate, rl.Rectangle(npc.x,npc.y,npc.size,npc.size)):
+                    self.action['target'] = f"{npc.x}{npc.y}"
+                    self.action['x'] = npc.x
+                    self.action['y'] = npc.y
+                    return
             
             self.attacking = False
             self.action['type'] = None
@@ -198,14 +220,14 @@ class Player():
                 (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
             )
 
-            for key, value in shared_memory['playersupdate'][0].items():
+            for key, value in shared_memory['playersinfo'][0].items():
                 if key == shared_memory['user']:
                     continue
 
-                player = shared_memory['playersupdate'][0][key]
+                player = shared_memory['playersinfo'][0][key]
 
-                if raylib.CheckCollisionPointRec(select_coordinate, select_player(player)):
-                    print(f'{player['hlth']}, {player['dmg']}, {player['mgc']}, {player['arm']}')
+                if raylib.CheckCollisionPointRec(select_coordinate, select_player(shared_memory['playersupdate'][0][key])):
+                    print(player)
 
     def attack_reset(self):
         self.attacking = False
