@@ -11,7 +11,7 @@ from NPC import NPC
 from SimplexNoise import simplex_noise
 
 # Constants
-HOST = "0.0.0.0"
+HOST = "10.46.11.41"
 PORT = 65432
 TICK_RATE = 1 / 60 # 60 Hz
 
