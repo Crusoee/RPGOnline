@@ -28,13 +28,13 @@ class Player():
             }
         
         self.stats =    {  
-                            'dmg' : 1,
+                            'dmg' : 0,
                             'mgc' : 0,
                             'arm' : 0,
-                            'hlth' : 10,
+                            'hlth' : 0,
                             'hit' : '',
-                            'speed' : 300,
-                            'swmspeed' : 150
+                            'speed' : 0,
+                            'swmspeed' : 0
                         }
         
         self.distance = 50
@@ -97,6 +97,7 @@ class Player():
 
     def move(self, chunk_data, shared_memory):
 
+        # Getting players previous location
         self.prev_locsize = rl.Vector2(self.locsize.x - self.base.x, self.locsize.y - self.base.y)
         
         # If your health is 0, respawn: NEEDS TO BE EXPOUNDED
@@ -108,7 +109,7 @@ class Player():
         value = simplex_noise((self.locsize.x - self.base.x) // TILE_SIZE, 
                         (self.locsize.y - self.base.y) // TILE_SIZE)
 
-        # Changing the speed of your player
+        # Changing the speed of your player depending on what terrain their standing on
         if value < Render.water:
             self.speed = self.stats['swmspeed']
             self.in_water = True

@@ -2,7 +2,7 @@ import zlib
 import pickle
 import socket
 
-host = '10.46.11.41'
+host = '192.168.1.222'
 # host = '10.0.0.128'
 port = 65432
 
@@ -43,13 +43,20 @@ def send_message(conn, data, use_compression=True):
         chunk = serialized_data[i:i + chunk_size]
         conn.sendall(chunk)
 
-def client_communication_loop(shared_memory):
+def client_communication_loop(shared_memory, username, password, intent):
     s = socket.socket()
     s.connect((host, port))
     print("Connected to the server")
 
-    shared_memory['user'] = get_message(s)
-    print(shared_memory['user'])
+    # intent
+    # send_message(s, intent, False)
+
+
+    # shared_memory['user'] = get_message(s)
+    send_message(s, (username,password), False)
+    # shared_memory['user'] = username
+    # shared_memory['player']['nme'] = username
+    # print(shared_memory['user'])
 
     while shared_memory['running']:
         # send_message(s, [int(shared_memory['player'][0]), int(shared_memory['player'][1]), int(shared_memory['player'][2]), int(shared_memory['player'][3]), int(shared_memory['player'][4]), int(shared_memory['player'][5])],False)

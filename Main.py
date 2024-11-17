@@ -76,35 +76,38 @@ def game_loop(player, shared_memory):
 
 def main() -> int:
 
-    names = [
-        'Jimmynns',
-        'Johnseff',
-        'Jamie',
-        'Wendel',
-        'Rocklin',
-        'Rakkel',
-        'Byron',
-        'Brachel'
-    ]
-    name = names[random.randint(0,len(names)-1)]
+    # names = [
+    #     'Jimmynns',
+    #     'Johnseff',
+    #     'Jamie',
+    #     'Wendel',
+    #     'Rocklin',
+    #     'Rakkel',
+    #     'Byron',
+    #     'Brachel'
+    # ]
+    # name = names[random.randint(0,len(names)-1)]
+    intent = input("Login (0) or Create an Account (1)")
+    username = input("Username: ")
+    password = input("Password: ")
 
-    player = Player(rl.SKYBLUE, rl.Rectangle(500, 500, PLAYER_WIDTH, PLAYER_HEIGHT), 500, name)
+    player = Player(rl.SKYBLUE, rl.Rectangle(500, 500, PLAYER_WIDTH, PLAYER_HEIGHT), 500, username)
     
     manager = multiprocessing.Manager()
     shared_memory = manager.dict()
     shared_memory["player"] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
-                               'nme' : name,
+                               'nme' : username,
                                'swim' : player.in_water,
                                'action' : player.action}
     shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
     shared_memory["playersinfo"] = manager.list([{}])
     shared_memory["npcs"] = [{}]
-    shared_memory["user"] = ""
+    shared_memory["user"] = username
     shared_memory["stats"] = player.stats
     shared_memory["running"] = True
 
-    communicationloop = multiprocessing.Process(target=client_communication_loop, args=(shared_memory,))
+    communicationloop = multiprocessing.Process(target=client_communication_loop, args=(shared_memory, username, password, intent))
     communicationloop.start()
 
     game_loop(player, shared_memory)

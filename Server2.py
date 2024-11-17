@@ -6,12 +6,13 @@ import time
 import random
 import math
 import traceback
+import json
 
 from NPC import NPC
 from SimplexNoise import simplex_noise
 
 # Constants
-HOST = "10.46.11.41"
+HOST = "0.0.0.0"
 PORT = 65432
 TICK_RATE = 1 / 60 # 60 Hz
 
@@ -57,6 +58,14 @@ def get_status(client_data):
         time.sleep(20)
         print("Amount of Players: ", len(client_data))
 
+def match_dict(dictionary1, dictionary2_set):
+    dict_copy = dictionary2_set.copy()
+    for key1, item1 in dictionary1.items():
+        for key2, item2 in  dictionary2_set.items():
+            if key1 == key2:
+                dict_copy[key1] = item1
+    return dict_copy
+
 def game_loop(client_updates, client_data_lock, action_queue, client_info):
     """
     NPCs
@@ -98,7 +107,7 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
                     with client_data_lock:
                         target = client_info[action['target']]
                     # Damage Calculation
-                    target['hlth'] -= initiator['dmg'] + (math.log(random.uniform(1e-3, 1)) * (initiator['crit']))
+                    target['hlth'] -= initiator['dmg']
                     # Reset attack Counter
                     initiator['atc'] = 0
                     # Add 1 to a players kill count
@@ -112,13 +121,13 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
                 If a player attacks an NPC
                 """
                 if action['type'] == 'attacknpc' and initiator['atc'] >= initiator['ats'] and action['target'] in npcs.keys():
-                    npcs[action['target']].health -= initiator['dmg'] + (math.log(random.uniform(1e-3, 1)) * (initiator['crit']))
+                    npcs[action['target']].health -= initiator['dmg']
                     # Reset attack Counter
                     initiator['atc'] = 0
 
                     # If an npcs health is less than 0
                     if npcs[action['target']].health < 0:
-                        initiator['dmg'] *= 1.1
+                        initiator['dmg'] = round(initiator['dmg'] * 1.1)
                         npcs.pop(action['target'], None)
 
                 if action['type'] == 'loot':
@@ -164,14 +173,25 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
         except (TimeoutError, EOFError, KeyError, ConnectionResetError, ConnectionAbortedError) as e:
             print(f"Error processing data: {traceback.format_exc()}")
 
-def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info):
+def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info, player_data_loaded_from_storage):
     print(f"Connection with {addr[0]} on port {addr[1]} started...")
+
+    """
+    handle_client essentially is exactly what the name entails. It connects the client to the server. It keeps the server updated with client received 
+    information. We take the client address and port and make it into an identifiable key for each client individually (WHICH MAY BE BAD PRACTICE?). In this 
+    function we create 2 dictionaries, updates is for information coming from the client and info is information of the client from the server going to the 
+    client. The client sends login info so that the server can load in his/her player stats into the info dictionary. client_info and client_updates are both shared
+    dictionaries between the handle_client and game_loop processes. We send both entire dicts to all clients so that they can see each others names and stats.
+    Because the data inside a shared dictionary is immutable, we create a copy of a the dict of the player inside the shared dict, we update it, then we set it
+    again (this seems to be the only way to edit specific values).
+
+    """
     conn.settimeout(5.0)
 
-    username = f"{addr[0]}:{addr[1]}"
+    # username = f"{addr[0]}:{addr[1]}"
 
-    # sending them their user name in the server
-    send_message(conn, username)
+    # # sending them their user name in the server
+    # send_message(conn, username)
 
     updates =  {
                 'x' : 0,
@@ -181,9 +201,9 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             }
 
     info = {
-                'user' : username,
+                'user' : '',
 
-                'dmg' : 15,
+                'dmg' : 10,
                 'crit' : 2,
 
                 'mgc' : 0,
@@ -195,8 +215,8 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
                 'hit' : '',
 
-                'ats' : 60,
                 'atc' : 60,
+                'ats' : 60,
 
                 'ress' : 600,
                 'rescntr' : 0,
@@ -208,6 +228,23 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
                 'conn' : conn
             }
+    
+    # Logging in player
+    login = get_message(conn, False)
+
+    login_accepted = False
+    for player in player_data_loaded_from_storage:
+        if player["username"] == login[0] and player["password"] == login[1]:
+            username = player["username"]
+            info = match_dict(player['info'], info)
+            info['username'] = username
+            login_accepted = True
+    if login_accepted:
+        print("login successful: ", login[0])
+    else:
+        print("login failed", login[0])
+        return
+            
     
     # setting up client
     client_updates[username] = updates
@@ -254,6 +291,10 @@ def start_server():
     client_stats = manager.dict()
     action_queue = manager.Queue()
 
+    # loading player data from players.json
+    with open("players.json", "r") as json_file:
+        player_data_loaded_from_storage = json.load(json_file)
+    
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen()
@@ -265,7 +306,10 @@ def start_server():
         while True:
             try:
                 conn, addr = s.accept()
-                multiprocessing.Process(target=handle_client, args=(conn, addr, client_data, client_stats_lock, action_queue, client_stats)).start()
+                multiprocessing.Process(
+                    target=handle_client, 
+                    args=(conn, addr, client_data, client_stats_lock, action_queue, client_stats, player_data_loaded_from_storage)
+                    ).start()
             except KeyboardInterrupt:
                 print("Server shutting down...")
                 break

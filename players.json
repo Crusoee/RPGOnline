@@ -1,0 +1,43 @@
+[
+    {
+        "username": "John Doe",
+        "password": "abc123",
+        "info": {
+            "dmg": 10,
+            "crit": 2,
+            "mgc": 0,
+            "arm": 0,
+            "hlth": 100,
+            "mhlth": 100,
+            "hit": "",
+            "atc": 60,
+            "ats": 60,
+            "ress": 600,
+            "rescntr": 0,
+            "speed": 200,
+            "swmspeed": 100,
+            "killcount": 0
+        }
+    },
+    {
+        "username": "Jane Smith",
+        "password": "xyz456",
+        "info": {
+            "dmg": 15,
+            "crit": 3,
+            "mgc": 5,
+            "arm": 1,
+            "hlth": 120,
+            "mhlth": 120,
+            "hit": "",
+            "atc": 65,
+            "ats": 70,
+            "ress": 650,
+            "rescntr": 0,
+            "speed": 180,
+            "swmspeed": 110,
+            "killcount": 2
+        }
+    }
+]
+
