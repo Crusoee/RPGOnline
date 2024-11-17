@@ -43,7 +43,7 @@ def send_message(conn, data, use_compression=True):
         chunk = serialized_data[i:i + chunk_size]
         conn.sendall(chunk)
 
-def client_communication_loop(shared_memory, username, password, intent):
+def client_communication_loop(shared_memory, login):
     s = socket.socket()
     s.connect((host, port))
     print("Connected to the server")
@@ -53,7 +53,7 @@ def client_communication_loop(shared_memory, username, password, intent):
 
 
     # shared_memory['user'] = get_message(s)
-    send_message(s, (username,password), False)
+    send_message(s, login, False)
     # shared_memory['user'] = username
     # shared_memory['player']['nme'] = username
     # print(shared_memory['user'])

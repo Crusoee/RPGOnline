@@ -107,7 +107,7 @@ def main() -> int:
     shared_memory["stats"] = player.stats
     shared_memory["running"] = True
 
-    communicationloop = multiprocessing.Process(target=client_communication_loop, args=(shared_memory, username, password, intent))
+    communicationloop = multiprocessing.Process(target=client_communication_loop, args=(shared_memory, (username, password, intent)))
     communicationloop.start()
 
     game_loop(player, shared_memory)
