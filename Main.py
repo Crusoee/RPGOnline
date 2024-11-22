@@ -87,6 +87,7 @@ def main() -> int:
     #     'Brachel'
     # ]
     # name = names[random.randint(0,len(names)-1)]
+    
     intent = input("Login (0) or Create an Account (1)")
     username = input("Username: ")
     password = input("Password: ")
