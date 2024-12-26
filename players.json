@@ -38,6 +38,65 @@
             "swmspeed": 110,
             "killcount": 2
         }
+    },
+    {
+        "username": "jij",
+        "password": "abab",
+        "info": {
+            "dmg": 10,
+            "crit": 2,
+            "mgc": 0,
+            "arm": 0,
+            "hlth": 100,
+            "mhlth": 100,
+            "hit": "",
+            "atc": 60,
+            "ats": 60,
+            "ress": 600,
+            "rescntr": 0,
+            "speed": 200,
+            "swmspeed": 100,
+            "killcount": 0
+        }
+    },
+    {
+        "username": "Jamie",
+        "password": "abc",
+        "info": {
+            "dmg": 10,
+            "crit": 2,
+            "mgc": 0,
+            "arm": 0,
+            "hlth": 100,
+            "mhlth": 100,
+            "hit": "",
+            "atc": 60,
+            "ats": 60,
+            "ress": 600,
+            "rescntr": 0,
+            "speed": 200,
+            "swmspeed": 100,
+            "killcount": 0
+        }
+    },
+    {
+        "username": "Drewfus",
+        "password": "fafa",
+        "info": {
+            "dmg": 10,
+            "crit": 2,
+            "mgc": 0,
+            "arm": 0,
+            "hlth": 100,
+            "mhlth": 100,
+            "hit": "",
+            "atc": 60,
+            "ats": 60,
+            "ress": 600,
+            "rescntr": 0,
+            "speed": 200,
+            "swmspeed": 100,
+            "killcount": 0
+        }
     }
 ]
-

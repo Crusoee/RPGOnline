@@ -88,28 +88,43 @@ def main() -> int:
     # ]
     # name = names[random.randint(0,len(names)-1)]
     
-    intent = input("Login (0) or Create an Account (1)")
-    username = input("Username: ")
-    password = input("Password: ")
+    while True:
+        intent = input("Login (0) or Create an Account (1)")
+        username = input("Username: ")
+        password = input("Password: ")
 
-    player = Player(rl.SKYBLUE, rl.Rectangle(500, 500, PLAYER_WIDTH, PLAYER_HEIGHT), 500, username)
-    
-    manager = multiprocessing.Manager()
-    shared_memory = manager.dict()
-    shared_memory["player"] = {'x' : player.locsize.x,
-                               'y' : player.locsize.y,
-                               'nme' : username,
-                               'swim' : player.in_water,
-                               'action' : player.action}
-    shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
-    shared_memory["playersinfo"] = manager.list([{}])
-    shared_memory["npcs"] = [{}]
-    shared_memory["user"] = username
-    shared_memory["stats"] = player.stats
-    shared_memory["running"] = True
+        player = Player(rl.SKYBLUE, rl.Rectangle(500, 500, PLAYER_WIDTH, PLAYER_HEIGHT), 500, username)
+        
+        manager = multiprocessing.Manager()
+        shared_memory = manager.dict()
+        shared_memory["player"] = {'x' : player.locsize.x,
+                                'y' : player.locsize.y,
+                                'nme' : username,
+                                'swim' : player.in_water,
+                                'action' : player.action}
+        shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
+        shared_memory["playersinfo"] = manager.list([{}])
+        shared_memory["npcs"] = [{}]
+        shared_memory["user"] = username
+        shared_memory["stats"] = player.stats
+        shared_memory["running"] = True
+        shared_memory["login_successful"] = ""
 
-    communicationloop = multiprocessing.Process(target=client_communication_loop, args=(shared_memory, (username, password, intent)))
-    communicationloop.start()
+
+        communicationloop = multiprocessing.Process(target=client_communication_loop, args=(shared_memory, (username, password, intent)))
+        communicationloop.start()
+
+        # Waiting to see if login was successful or not
+        while shared_memory["login_successful"] == "":
+            ...
+
+        print(shared_memory["login_successful"])
+
+        if shared_memory["login_successful"] == False:
+            communicationloop.join()
+
+        if shared_memory["login_successful"] == True:
+            break
 
     game_loop(player, shared_memory)
 

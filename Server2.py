@@ -201,8 +201,6 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             }
 
     info = {
-                'user' : '',
-
                 'dmg' : 10,
                 'crit' : 2,
 
@@ -232,23 +230,49 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
     # Logging in player
     login = get_message(conn, False)
 
-    login_accepted = False
-    for player in player_data_loaded_from_storage:
-        if player["username"] == login[0] and player["password"] == login[1]:
-            username = player["username"]
-            info = match_dict(player['info'], info)
-            info['username'] = username
-            login_accepted = True
-    if login_accepted:
-        print("login successful: ", login[0])
-    else:
-        print("login failed", login[0])
-        return
-            
-    
+    if login[2] == '0':
+        login_accepted = False
+        for player in player_data_loaded_from_storage:
+            if player["username"] == login[0] and player["password"] == login[1] and login[0] not in client_info.keys():
+                username = player["username"]
+                info = match_dict(player['info'], info)
+                info['username'] = username
+                login_accepted = True
+        if login_accepted:
+            print("login successful: ", login[0])
+            send_message(conn, True, False)
+        else:
+            print("login failed", login[0])
+            send_message(conn, False, False)
+            return
+    elif login[2] == '1':
+        login_accepted = True
+        for player in player_data_loaded_from_storage:
+            if player["username"] == login[0]:
+                login_accepted = False
+        
+        if login_accepted:
+            print("login successful: ", login[0])
+            send_message(conn, True, False)
+            username = login[0]
+        else:
+            print("login failed", login[0])
+            send_message(conn, False, False)
+            return
+        
+        save_info = info.copy()
+        del save_info['conn']
+
+        new_player = {"username" : login[0], "password" : login[1],"info" : save_info}
+
+        player_data_loaded_from_storage.append(new_player)
+
+        with open("players.json", "w") as f:
+            json.dump(player_data_loaded_from_storage, f,indent=4)
+
     # setting up client
-    client_updates[username] = updates
-    client_info[username] = info
+    client_updates[login[0]] = updates
+    client_info[login[0]] = info
 
     while True:
         try:

@@ -2,7 +2,7 @@ import zlib
 import pickle
 import socket
 
-host = '10.46.11.14'
+host = '192.168.1.141'
 # host = '10.0.0.128'
 port = 65432
 
@@ -48,15 +48,13 @@ def client_communication_loop(shared_memory, login):
     s.connect((host, port))
     print("Connected to the server")
 
-    # intent
-    # send_message(s, intent, False)
 
-
-    # shared_memory['user'] = get_message(s)
     send_message(s, login, False)
-    # shared_memory['user'] = username
-    # shared_memory['player']['nme'] = username
-    # print(shared_memory['user'])
+    shared_memory["login_successful"] = get_message(s, False)
+    if shared_memory["login_successful"] == False:
+        print("""If logging in: Either wrong username/password or account already in use...
+              If creating an account: username already exists...""")
+        return
 
     while shared_memory['running']:
         # send_message(s, [int(shared_memory['player'][0]), int(shared_memory['player'][1]), int(shared_memory['player'][2]), int(shared_memory['player'][3]), int(shared_memory['player'][4]), int(shared_memory['player'][5])],False)
