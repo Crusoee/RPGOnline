@@ -1,17 +1,29 @@
 import pyray as rl
 import raylib as raylib
 import multiprocessing
-import random
+
 
 from Player import Player
 from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS, PLAYER_WIDTH,PLAYER_HEIGHT
 from Client import client_communication_loop
 import Render
+from Menu import Menu
 
 # --- main ---
 def game_loop(player, shared_memory):
-    raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, b"Hide And Seek")
+    raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, b"RPG Online")
+    raylib.SetWindowPosition(100,100)
     raylib.SetTargetFPS(0)
+
+    rl.hide_cursor()
+
+    render_texture = rl.load_render_texture(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+    player_shaders = {
+        "invert_text" : rl.load_shader("", "invert_text.fs")
+    }
+
+    cursorTexture = rl.load_texture("Mouse\dwarven_gauntlet.png")
 
     tiles = {'water_tile' : rl.load_texture("topdown_tiles\\tiles\\deep0\\straight\\0\\0.png"),
         'shallow_tile' : rl.load_texture("topdown_tiles\\tiles\\shallow0\\straight\\0\\0.png"),
@@ -21,12 +33,29 @@ def game_loop(player, shared_memory):
         'rock_tile' : rl.load_texture("topdown_tiles\\Mountain.png")}
     
     npc = rl.load_texture("topdown_tiles\\tiles\\beach-shallow0\\curve_in\\0\\0.png")
-    
+
+    written_font = rl.load_font("Font\Caveat-VariableFont_wght.ttf")
+
+    player_textures = {
+        "click" : rl.load_texture("Textures\Click\glow.png"),
+
+        "written_font" : written_font
+    }
+
+    menu_textures = {
+        "written_font" : written_font,
+
+        "parchment" : rl.load_texture("Textures\Menu\scroll.png")
+    }
+
     chunk_data = {}
+
+    menu = Menu(SCREEN_WIDTH, SCREEN_HEIGHT, menu_textures)
 
     while not raylib.WindowShouldClose():
         # -------------Draw-------------------
-        raylib.BeginDrawing()
+        # raylib.BeginDrawing()
+        raylib.BeginTextureMode(render_texture)
         raylib.ClearBackground(rl.RAYWHITE)
         raylib.BeginMode2D(player.camera)
 
@@ -36,24 +65,40 @@ def game_loop(player, shared_memory):
 
         Render.draw_players(shared_memory)
 
-        player.draw()
+
+        player.draw(player_textures, player_shaders)
 
         # for jim in chunk_data[int(player.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(player.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1]:
         #     raylib.DrawRectangleRec(jim, rl.GREEN)
 
         raylib.EndMode2D()
+        raylib.EndTextureMode()
+        raylib.BeginDrawing()
 
-        # rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.BLACK)
-        # rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.BLACK)
-        # # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
-        # rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
-        # rl.draw_text(f"health: {player.stats['hlth']}", 50, 200, 40, rl.RED)
+        rl.draw_texture_rec(render_texture.texture, rl.Rectangle(0,0,render_texture.texture.width, -render_texture.texture.height),rl.Vector2(0,0),rl.WHITE)
+
+        # 105 fps
+        rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", SCREEN_WIDTH - 180, 50, 40, rl.BLACK)
+        rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", SCREEN_WIDTH - 200, 100, 30, rl.BLACK)
 
         Render.draw_info(player)
+
+        menu.render(player)
+
+        # rl.draw_texture_v(cursorTexture, rl.get_mouse_position(), rl.WHITE)
+
+        rl.draw_texture_pro(cursorTexture, rl.Rectangle(0,0,cursorTexture.width, cursorTexture.height), 
+                            rl.Rectangle(rl.get_mouse_position().x,rl.get_mouse_position().y,cursorTexture.width + 20, cursorTexture.height + 20), 
+                            rl.Vector2(0,0),
+                            0.0, 
+                            rl.WHITE)
 
         raylib.EndDrawing()
 
         # -------------Mechanics-------------------
+
+        # Menu
+        menu.logic()
         
         # Updating Player Stats
         player.update(shared_memory)
@@ -72,21 +117,13 @@ def game_loop(player, shared_memory):
                                'action' : player.action}
 
     shared_memory['running'] = False
+
+    rl.unload_shader(player_shaders['invert_text'])
+    rl.unload_render_texture(render_texture)
+
     raylib.CloseWindow()
 
 def main() -> int:
-
-    # names = [
-    #     'Jimmynns',
-    #     'Johnseff',
-    #     'Jamie',
-    #     'Wendel',
-    #     'Rocklin',
-    #     'Rakkel',
-    #     'Byron',
-    #     'Brachel'
-    # ]
-    # name = names[random.randint(0,len(names)-1)]
     
     while True:
         intent = input("Login (0) or Create an Account (1)")
@@ -129,6 +166,8 @@ def main() -> int:
     game_loop(player, shared_memory)
 
     communicationloop.join()
+
+
 
     return 0
 

@@ -106,8 +106,10 @@ def draw_info(player):
     # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
     # rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
     
-    rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 20, rl.RED)
-    rl.draw_text(f"damage: {player.stats['dmg']}", 20, 40, 20, rl.BLACK)
-    # rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 10, rl.RED)
-    # rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 10, rl.RED)
-    # rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 10, rl.RED)
+    # rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 20, rl.RED)
+    # rl.draw_text(f"damage: {player.stats['dmg']}", 20, 40, 20, rl.BLACK)
+    # rl.draw_text(f"armor: {player.stats['arm']}", 20, 60, 20, rl.GRAY)
+    # rl.draw_text(f"regen: {player.stats['regens'] / 60} sec", 20, 80, 20, rl.GREEN)
+    # rl.draw_text(f"magic: {player.stats['arm']}", 20, 100, 20, rl.BLUE)
+    ...
+

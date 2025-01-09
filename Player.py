@@ -28,13 +28,35 @@ class Player():
             }
         
         self.stats =    {  
-                            'dmg' : 0,
-                            'mgc' : 0,
-                            'arm' : 0,
-                            'hlth' : 0,
-                            'hit' : '',
-                            'speed' : 0,
-                            'swmspeed' : 0
+                'dmg' : 10,
+
+                'lifesteal' : 0,
+                'thorns' : 0,
+
+                'crit' : 1.1,
+                'chance' : 50,
+
+                'mgc' : 0,
+
+                'arm' : 0,
+
+                'hlth' : 100,
+                'mhlth' : 100,
+                'regens' : 120,
+                'regencntr' : 0,
+
+                'hit' : '',
+
+                'atc' : 60,
+                'ats' : 60,
+
+                'ress' : 600,
+                'rescntr' : 0,
+
+                'speed' : 200,
+                'swmspeed' : 100,
+
+                'killcount' : 0,
                         }
         
         self.distance = 50
@@ -61,7 +83,32 @@ class Player():
             1.0                    # Camera zoom (1.0 is default)
         )
 
-    def draw(self):
+    def draw(self, textures, player_shaders):
+
+
+        if self.coordinate != None and self.attacking == False:
+            # raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
+            # rl.draw_texture(textures["click"],int(self.coordinate.x), int(self.coordinate.y),rl.YELLOW)
+            shrink_factor = 0.3  # For example, shrink to 50% of original size
+
+            # Calculate new width and height after shrinking
+            new_width = textures["click"].width * shrink_factor
+            new_height = textures["click"].height * shrink_factor
+
+            # Center the destination rectangle
+            rl.draw_texture_pro(
+                textures["click"], 
+                rl.Rectangle(0, 0, textures["click"].width, textures["click"].height),  # Full source rectangle
+                rl.Rectangle(
+                    int(self.coordinate.x) - new_width / 2, 
+                    int(self.coordinate.y) - new_height / 2, 
+                    new_width, 
+                    new_height
+                ), 
+                rl.Vector2(0, 0),  # Origin for rotation
+                0.0, 
+                rl.Color(255,255,255,170)
+            )
 
         # raylib.DrawRectangleRec(self.prev_locsize, rl.BROWN)
         if self.in_water:
@@ -69,10 +116,13 @@ class Player():
         else:
             raylib.DrawRectangleRec(self.locsize, self.color)
 
-        if self.coordinate != None and self.attacking == False:
-            raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
+        # rl.measure_text_ex(textures["written_font"], self.name, 30,)
+
+        rl.begin_shader_mode(player_shaders['invert_text'])
 
         rl.draw_text(self.name, int(self.locsize.x - (len(self.name) // 2)), int(self.locsize.y - 20), 20, rl.GREEN)
+
+        rl.end_shader_mode()
 
         # if self.attacking == True:
         #     rl.draw_circle(int(self.locsize.x - self.base.x),int(self.locsize.y - self.base.y / 2),self.distance,rl.Color(255,255,0,100))
@@ -239,9 +289,11 @@ class Player():
         if shared_memory['user'] in shared_memory['playersinfo'][0].keys():
             stats = shared_memory['playersinfo'][0][shared_memory['user']]
 
-            self.stats['hlth'] = stats['hlth']
-            self.stats['dmg'] = stats['dmg']
-            self.stats['mgc'] = stats['mgc']
-            self.stats['arm'] = stats['arm']
-            self.stats['speed'] = stats['speed']
-            self.stats['swmspeed'] = stats['swmspeed']
+            self.stats = stats
+
+            # self.stats['hlth'] = stats['hlth']
+            # self.stats['dmg'] = stats['dmg']
+            # self.stats['mgc'] = stats['mgc']
+            # self.stats['arm'] = stats['arm']
+            # self.stats['speed'] = stats['speed']
+            # self.stats['swmspeed'] = stats['swmspeed']

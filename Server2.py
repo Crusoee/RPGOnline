@@ -3,6 +3,7 @@ import multiprocessing
 import pickle
 import zlib
 import time
+import datetime
 import random
 import math
 import traceback
@@ -56,7 +57,7 @@ def get_message(conn, use_compression=True):
 def get_status(client_data):
     while True:
         time.sleep(20)
-        print("Amount of Players: ", len(client_data))
+        print(datetime.datetime.now(), "Amount of Players: ", len(client_data))
 
 def match_dict(dictionary1, dictionary2_set):
     dict_copy = dictionary2_set.copy()
@@ -103,16 +104,41 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
                 """
                 If a player attacks another player
                 """
+
                 if action['type'] == 'attack' and initiator['atc'] >= initiator['ats'] and action['target'] in client_info.keys():
                     with client_data_lock:
                         target = client_info[action['target']]
-                    # Damage Calculation
-                    target['hlth'] -= initiator['dmg']
+
+                    # Damage Calculation and Crit
+                    # How much true damage initiator did to target
+                    true_damage = round(initiator['dmg'] * (initiator['crit'] if random.randint(1, initiator['chance']) == 1 else 1), 2)
+                    # How much damage initiator did to target after armor calculation
+                    damage = round(true_damage - true_damage * target['arm'] / true_damage, 2)
+                    # How much reversal damage target did to initiator
+                    thorns = round(damage * target['thorns'], 2)
+                    # How much life steal initiator gets from damage
+                    lifesteal = round(damage * initiator['lifesteal'], 2)
+                    # How much life steal target gets from reversal damage
+                    target_lifesteal = round(thorns * target['lifesteal'], 2)
+
+                    target['hlth'] -= damage
+                    target['hlth'] += target_lifesteal
+                    initiator['hlth'] -= thorns
+                    initiator['hlth'] += lifesteal
+
+                    if target['hlth'] > target['mhlth']:
+                        target['hlth'] = target['mhlth']
+
+                    if initiator['hlth'] > initiator['mhlth']:
+                        initiator['hlth'] = initiator['mhlth']
+
                     # Reset attack Counter
                     initiator['atc'] = 0
+
                     # Add 1 to a players kill count
                     if target['hlth'] <= 0:
                         initiator['killcount'] += 1
+
                     # Reset the target
                     with client_data_lock:
                         client_info[action['target']] = target
@@ -127,7 +153,7 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
 
                     # If an npcs health is less than 0
                     if npcs[action['target']].health < 0:
-                        initiator['dmg'] = round(initiator['dmg'] * 1.1)
+                        initiator['dmg'] = round(initiator['dmg'] * 1.1, 2)
                         npcs.pop(action['target'], None)
 
                 if action['type'] == 'loot':
@@ -136,7 +162,9 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
                 with client_data_lock:
                     client_info[action['initiator']] = initiator
 
-            # client tick updates
+            """
+            TICK UPDATES
+            """
             for addr, stats in client_info.items():
 
                 client = client_info[addr]
@@ -151,6 +179,17 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
                     if client['rescntr'] >= client['ress']:
                         client['hlth'] = client['mhlth']
                         client['rescntr'] = 0
+
+                # Health Regeneration
+                if client['hlth'] < client['mhlth']:
+                    if client['regencntr'] < client['regens']:
+                        client['regencntr'] += 1
+                    else:
+                        client['regencntr'] = 0
+                        client['hlth'] += 1
+                    
+                    if client['hlth'] > client['mhlth']:
+                        client['hlth'] = client['mhlth']
 
                 client_info[addr] = client
 
@@ -171,9 +210,10 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
             if elapsed < TICK_RATE:
                 time.sleep(TICK_RATE - elapsed)
         except (TimeoutError, EOFError, KeyError, ConnectionResetError, ConnectionAbortedError) as e:
-            print(f"Error processing data: {traceback.format_exc()}")
+            print(f"Error processing data!", traceback.format_exc())
+            print(len(client_info), client_info.keys())
 
-def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info, player_data_loaded_from_storage):
+def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info):
     print(f"Connection with {addr[0]} on port {addr[1]} started...")
 
     """
@@ -186,13 +226,10 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
     again (this seems to be the only way to edit specific values).
 
     """
+
     conn.settimeout(5.0)
 
-    # username = f"{addr[0]}:{addr[1]}"
-
-    # # sending them their user name in the server
-    # send_message(conn, username)
-
+    # Client updates to server
     updates =  {
                 'x' : 0,
                 'y' : 0,
@@ -200,9 +237,15 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'swim' : False
             }
 
+    # Player info sent to clients
     info = {
                 'dmg' : 10,
-                'crit' : 2,
+
+                'lifesteal' : 0,
+                'thorns' : 0,
+
+                'crit' : 1.1,
+                'chance' : 50,
 
                 'mgc' : 0,
 
@@ -210,6 +253,8 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
                 'hlth' : 100,
                 'mhlth' : 100,
+                'regens' : 120,
+                'regencntr' : 0,
 
                 'hit' : '',
 
@@ -224,55 +269,93 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
                 'killcount' : 0,
 
+                # 'inventory' : [],
+
                 'conn' : conn
             }
     
-    # Logging in player
+    """
+    LOGIN...
+    """
+    
+    # Incoming Player Request
     login = get_message(conn, False)
 
+    # Opening all player accounts and storing them in a dictionary
+    with open("players.json", "r") as json_file:
+        player_data_loaded_from_storage = json.load(json_file)
+
+    # Logging in to an Existing Player Account
     if login[2] == '0':
         login_accepted = False
+
+        # Looping through all player accounts for matching username and password (also that they're not logged in already).
         for player in player_data_loaded_from_storage:
             if player["username"] == login[0] and player["password"] == login[1] and login[0] not in client_info.keys():
+                # Creating a variable "username"
                 username = player["username"]
+                # Overriding the default info dict with the the saved info dict of the player
                 info = match_dict(player['info'], info)
+                # Creating a spot for username to be saved within info evn though it already is saved in the json?
                 info['username'] = username
+                # Log in was accepted
                 login_accepted = True
+        # Sending login successful message back for client
         if login_accepted:
             print("login successful: ", login[0])
             send_message(conn, True, False)
+        # Sending login failure message back for client
         else:
             print("login failed", login[0])
             send_message(conn, False, False)
             return
+    # Creating a New Player Account
     elif login[2] == '1':
         login_accepted = True
+
+        # Looping through all player accounts for matching username to make sure new account request doesn't overwrite a currently created account
         for player in player_data_loaded_from_storage:
             if player["username"] == login[0]:
                 login_accepted = False
-        
+        # Sending login successful message back for client and set up
         if login_accepted:
             print("login successful: ", login[0])
             send_message(conn, True, False)
+            # Creating username variable
             username = login[0]
+            # Creating a spot for username to be saved within info evn though it already is saved in the json?
+            info['username'] = login[0]
+        # Sending login failure message back for client
         else:
             print("login failed", login[0])
             send_message(conn, False, False)
             return
         
+        # Creating a savable copy of the new player info
         save_info = info.copy()
+        # Deleting the connection key and value because it is unpicklable
         del save_info['conn']
 
+        # Organizing a dict
         new_player = {"username" : login[0], "password" : login[1],"info" : save_info}
-
+        # Appending it to the current list of players
         player_data_loaded_from_storage.append(new_player)
-
+        # Saving it back to the file
         with open("players.json", "w") as f:
             json.dump(player_data_loaded_from_storage, f,indent=4)
+    else:
+        print("login failed", login[0])
+        send_message(conn, False, False)
+        return
 
     # setting up client
-    client_updates[login[0]] = updates
-    client_info[login[0]] = info
+    with client_data_lock:
+        client_updates[login[0]] = updates
+        client_info[login[0]] = info
+
+    """
+    CLIENT LOOP
+    """
 
     while True:
         try:
@@ -303,8 +386,30 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             print(f"Error processing data from {username}: {e}")
             break
 
-    client_updates.pop(username, None)
-    client_info.pop(username, None)
+    """
+    SAVE DATA AFTER CLIENT EXITING
+    """
+
+    with open("players.json", "r") as json_file:
+        player_data_loaded_from_storage = json.load(json_file)
+
+        save_info = client_info[username].copy()
+        del save_info["conn"]
+
+        for i in range(len(player_data_loaded_from_storage)):
+            if player_data_loaded_from_storage[i]["username"] == username:
+                player_data_loaded_from_storage[i]["info"] = save_info
+
+    with open("players.json", "w") as f:
+        json.dump(player_data_loaded_from_storage, f,indent=4)
+
+    # Removing client from active dictionaries
+    with client_data_lock:
+        if username in client_updates:
+            del client_updates[username]
+        if username in client_info:
+            del client_info[username]
+
     print(f"Connection with {addr[0]} on port {addr[1]} finished...")
 
 def start_server():
@@ -314,17 +419,13 @@ def start_server():
     client_data = manager.dict()
     client_stats = manager.dict()
     action_queue = manager.Queue()
-
-    # loading player data from players.json
-    with open("players.json", "r") as json_file:
-        player_data_loaded_from_storage = json.load(json_file)
     
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen()
         print(f"Server listening on {HOST}:{PORT}")
 
-        # multiprocessing.Process(target=get_status, args=(client_data,)).start()
+        multiprocessing.Process(target=get_status, args=(client_data,)).start()
         multiprocessing.Process(target=game_loop, args=(client_data, client_stats_lock, action_queue, client_stats)).start()
 
         while True:
@@ -332,7 +433,7 @@ def start_server():
                 conn, addr = s.accept()
                 multiprocessing.Process(
                     target=handle_client, 
-                    args=(conn, addr, client_data, client_stats_lock, action_queue, client_stats, player_data_loaded_from_storage)
+                    args=(conn, addr, client_data, client_stats_lock, action_queue, client_stats)
                     ).start()
             except KeyboardInterrupt:
                 print("Server shutting down...")
