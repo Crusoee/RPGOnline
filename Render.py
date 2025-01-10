@@ -68,35 +68,43 @@ def draw_tiles(player, chunk_data, tiles):
                     tile_draw_y = (chunk_y * CHUNK_SIZE + y) * TILE_SIZE
                     rl.draw_texture(tile_texture, tile_draw_x, tile_draw_y, rl.WHITE)
 
-def draw_players(shared_memory):
+def draw_players(shared_memory,player_textures):
     for key, value in shared_memory['playersupdate'][0].items():
         if key == shared_memory['user']:
             continue
 
         try:
             player = shared_memory['playersupdate'][0][key]
+            text_size = rl.measure_text_ex(player_textures["name_font"], player['nme'], 30, 0.0)
+            rl.draw_text_ex(player_textures["name_font"], player['nme'], rl.Vector2(int(player['x'] - (text_size.x / 2)  + PLAYER_WIDTH / 2), int(player['y'] - 80)), 40, 0.0, rl.BLACK)
+            
+            # Ensure health ratio is clamped between 0 and 1
+            health_ratio = max(0, min(1, shared_memory['playersinfo'][0][key]['hlth'] / shared_memory['playersinfo'][0][key]['mhlth']))
+            # Calculate base position for the health bar
+            base_x = int(player['x'] - 40 + PLAYER_WIDTH // 2)
+            base_y = int(player['y'] - 40)
+            # Draw the health bar
+            rl.draw_rectangle(base_x, base_y, 80, 20, rl.RED)  # Background
+            rl.draw_rectangle(base_x, base_y, int(80 * health_ratio), 20, rl.GREEN)  # Health bar
+
             if player['swim'] == True:
                 if key == shared_memory['player']['action']['target']:
                     raylib.DrawRectangle(int(player['x']), int(player['y']) + PLAYER_HEIGHT // 2, PLAYER_WIDTH, PLAYER_HEIGHT // 2, rl.YELLOW)
-                    rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
                 else:
                     raylib.DrawRectangle(int(player['x']), int(player['y']) + PLAYER_HEIGHT // 2, PLAYER_WIDTH, PLAYER_HEIGHT // 2, rl.SKYBLUE)
-                    rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
             else:
-                # print(shared_memory['player']['action']['target'], key)
                 if key == shared_memory['player']['action']['target']:
                     raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.YELLOW)
-                    rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
                 else:
                     raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.SKYBLUE)
-                    rl.draw_text(player['nme'],int(player['x']) - len(player['nme']) // 2, int(player['y']) - 40,20,rl.BLACK)
         except KeyError as e:
             print("Error Occurred in draw_players: ", e)
 
 def draw_npcs(shared_memory, npc):
     for key, value in shared_memory['npcs'][0].items():
         try:
-            rl.draw_texture(npc,value.x,value.y,rl.WHITE)
+            rl.draw_texture_pro(npc,rl.Rectangle(0,0,npc.width, npc.height), rl.Rectangle(value.x,value.y,npc.width + 20, npc.height + 20), rl.Vector2(0,0), 0.0, rl.WHITE)
+            
         except (KeyError) as e:
             print("Error: ", e)
 

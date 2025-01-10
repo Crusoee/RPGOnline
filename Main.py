@@ -12,7 +12,9 @@ from Menu import Menu
 # --- main ---
 def game_loop(player, shared_memory):
     raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, b"RPG Online")
+    # rl.toggle_fullscreen()
     raylib.SetWindowPosition(100,100)
+    
     raylib.SetTargetFPS(0)
 
     rl.hide_cursor()
@@ -32,14 +34,15 @@ def game_loop(player, shared_memory):
         'forest_tile' : rl.load_texture("topdown_tiles\\Forest.png"),
         'rock_tile' : rl.load_texture("topdown_tiles\\Mountain.png")}
     
-    npc = rl.load_texture("topdown_tiles\\tiles\\beach-shallow0\\curve_in\\0\\0.png")
+    npc = rl.load_texture("Textures\orb_red.png")
 
     written_font = rl.load_font("Font\Caveat-VariableFont_wght.ttf")
+    name_font = rl.load_font("Font\LilitaOne-Regular.ttf")
 
     player_textures = {
         "click" : rl.load_texture("Textures\Click\glow.png"),
 
-        "written_font" : written_font
+        "name_font" : name_font
     }
 
     menu_textures = {
@@ -54,8 +57,8 @@ def game_loop(player, shared_memory):
 
     while not raylib.WindowShouldClose():
         # -------------Draw-------------------
-        # raylib.BeginDrawing()
-        raylib.BeginTextureMode(render_texture)
+        raylib.BeginDrawing()
+        # raylib.BeginTextureMode(render_texture)
         raylib.ClearBackground(rl.RAYWHITE)
         raylib.BeginMode2D(player.camera)
 
@@ -63,7 +66,7 @@ def game_loop(player, shared_memory):
 
         Render.draw_npcs(shared_memory, npc)
 
-        Render.draw_players(shared_memory)
+        Render.draw_players(shared_memory, player_textures)
 
 
         player.draw(player_textures, player_shaders)
@@ -72,8 +75,8 @@ def game_loop(player, shared_memory):
         #     raylib.DrawRectangleRec(jim, rl.GREEN)
 
         raylib.EndMode2D()
-        raylib.EndTextureMode()
-        raylib.BeginDrawing()
+        # raylib.EndTextureMode()
+        # raylib.BeginDrawing()
 
         rl.draw_texture_rec(render_texture.texture, rl.Rectangle(0,0,render_texture.texture.width, -render_texture.texture.height),rl.Vector2(0,0),rl.WHITE)
 

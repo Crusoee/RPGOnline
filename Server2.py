@@ -54,7 +54,7 @@ def get_message(conn, use_compression=True):
     # Deserialize data
     return pickle.loads(received_data)
 
-def get_status(client_data):
+def get_status(client_data,client_stats_backup):
     while True:
         time.sleep(20)
         print(datetime.datetime.now(), "Amount of Players: ", len(client_data))
@@ -67,7 +67,7 @@ def match_dict(dictionary1, dictionary2_set):
                 dict_copy[key1] = item1
     return dict_copy
 
-def game_loop(client_updates, client_data_lock, action_queue, client_info):
+def game_loop(client_updates, client_data_lock, action_queue, client_info,client_stats_backup):
     """
     NPCs
     TESTING PHASE:
@@ -76,8 +76,8 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
     communicate what the player is attacking.
     """
     npcs = {}
-    for i in range(100):
-        npc = NPC("tree", 60, 0, random.randint(-1000,1000), random.randint(-1000,1000), 64)
+    for i in range(10):
+        npc = NPC("orb", 60, 0, random.randint(-1000,1000), random.randint(-1000,1000), 64)
         # the key can be whatever its coordinates are
         npcs[npc.get_key()] = npc
 
@@ -153,7 +153,7 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info):
 
                     # If an npcs health is less than 0
                     if npcs[action['target']].health < 0:
-                        initiator['dmg'] = round(initiator['dmg'] * 1.1, 2)
+                        initiator['dmg'] += 0.01
                         npcs.pop(action['target'], None)
 
                 if action['type'] == 'loot':
@@ -405,10 +405,8 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
     # Removing client from active dictionaries
     with client_data_lock:
-        if username in client_updates:
-            del client_updates[username]
-        if username in client_info:
-            del client_info[username]
+        del client_updates[username]
+        del client_info[username]
 
     print(f"Connection with {addr[0]} on port {addr[1]} finished...")
 
@@ -418,6 +416,7 @@ def start_server():
 
     client_data = manager.dict()
     client_stats = manager.dict()
+    client_stats_backup = [manager.dict()]
     action_queue = manager.Queue()
     
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -425,8 +424,8 @@ def start_server():
         s.listen()
         print(f"Server listening on {HOST}:{PORT}")
 
-        multiprocessing.Process(target=get_status, args=(client_data,)).start()
-        multiprocessing.Process(target=game_loop, args=(client_data, client_stats_lock, action_queue, client_stats)).start()
+        multiprocessing.Process(target=get_status, args=(client_data,client_stats_backup)).start()
+        multiprocessing.Process(target=game_loop, args=(client_data, client_stats_lock, action_queue, client_stats,client_stats_backup)).start()
 
         while True:
             try:

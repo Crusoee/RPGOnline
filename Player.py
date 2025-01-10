@@ -89,7 +89,7 @@ class Player():
         if self.coordinate != None and self.attacking == False:
             # raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
             # rl.draw_texture(textures["click"],int(self.coordinate.x), int(self.coordinate.y),rl.YELLOW)
-            shrink_factor = 0.3  # For example, shrink to 50% of original size
+            shrink_factor = 0.2  # For example, shrink to 50% of original size
 
             # Calculate new width and height after shrinking
             new_width = textures["click"].width * shrink_factor
@@ -107,7 +107,7 @@ class Player():
                 ), 
                 rl.Vector2(0, 0),  # Origin for rotation
                 0.0, 
-                rl.Color(255,255,255,170)
+                rl.Color(255,255,255,255)
             )
 
         # raylib.DrawRectangleRec(self.prev_locsize, rl.BROWN)
@@ -116,13 +116,22 @@ class Player():
         else:
             raylib.DrawRectangleRec(self.locsize, self.color)
 
-        # rl.measure_text_ex(textures["written_font"], self.name, 30,)
 
-        rl.begin_shader_mode(player_shaders['invert_text'])
+        # rl.begin_shader_mode(player_shaders['invert_text'])
 
-        rl.draw_text(self.name, int(self.locsize.x - (len(self.name) // 2)), int(self.locsize.y - 20), 20, rl.GREEN)
+        text_size = rl.measure_text_ex(textures["name_font"], self.name, 30, 0.0)
+        rl.draw_text_ex(textures["name_font"], self.name, rl.Vector2(int(self.locsize.x - (text_size.x / 2) + PLAYER_WIDTH / 2), int(self.locsize.y - 80)), 40, 0.0, rl.BLACK)
 
-        rl.end_shader_mode()
+        # Ensure health ratio is clamped between 0 and 1
+        health_ratio = max(0, min(1, self.stats['hlth'] / self.stats['mhlth']))
+        # Calculate base position for the health bar
+        base_x = int(self.locsize.x  - 40 + PLAYER_WIDTH // 2)
+        base_y = int(self.locsize.y  - 40)
+        # Draw the health bar
+        rl.draw_rectangle(base_x, base_y, 80, 20, rl.RED)  # Background
+        rl.draw_rectangle(base_x, base_y, int(80 * health_ratio), 20, rl.GREEN)  # Health bar
+
+        # rl.end_shader_mode()
 
         # if self.attacking == True:
         #     rl.draw_circle(int(self.locsize.x - self.base.x),int(self.locsize.y - self.base.y / 2),self.distance,rl.Color(255,255,0,100))

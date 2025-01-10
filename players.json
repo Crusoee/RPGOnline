@@ -3,6 +3,58 @@
         "username": "Crusoe",
         "password": "yessir",
         "info": {
+            "dmg": 10.03,
+            "lifesteal": 0,
+            "thorns": 0,
+            "crit": 1.1,
+            "chance": 50,
+            "mgc": 0,
+            "arm": 0,
+            "hlth": 63.610000000000014,
+            "mhlth": 100,
+            "regens": 120,
+            "regencntr": 75,
+            "hit": "",
+            "atc": 60,
+            "ats": 60,
+            "ress": 600,
+            "rescntr": 124,
+            "speed": 200,
+            "swmspeed": 100,
+            "killcount": 0,
+            "username": "Crusoe"
+        }
+    },
+    {
+        "username": "1",
+        "password": "",
+        "info": {
+            "dmg": 14.769999999999998,
+            "lifesteal": 0,
+            "thorns": 0,
+            "crit": 1.1,
+            "chance": 50,
+            "mgc": 0,
+            "arm": 0,
+            "hlth": 97.78999999999999,
+            "mhlth": 100,
+            "regens": 120,
+            "regencntr": 107,
+            "hit": "",
+            "atc": 60,
+            "ats": 60,
+            "ress": 600,
+            "rescntr": 0,
+            "speed": 200,
+            "swmspeed": 100,
+            "killcount": 3,
+            "username": "1"
+        }
+    },
+    {
+        "username": "Heyheyheyeeagaegaegea",
+        "password": "",
+        "info": {
             "dmg": 10,
             "lifesteal": 0,
             "thorns": 0,
@@ -22,14 +74,14 @@
             "speed": 200,
             "swmspeed": 100,
             "killcount": 0,
-            "username": "Crusoe"
+            "username": "Heyheyheyeeagaegaegea"
         }
     },
     {
-        "username": "1",
-        "password": "",
+        "username": "Ramentus",
+        "password": "zerotek",
         "info": {
-            "dmg": 11.0,
+            "dmg": 10,
             "lifesteal": 0,
             "thorns": 0,
             "crit": 1.1,
@@ -48,7 +100,85 @@
             "speed": 200,
             "swmspeed": 100,
             "killcount": 0,
-            "username": "1"
+            "username": "Ramentus"
+        }
+    },
+    {
+        "username": "Jimmy",
+        "password": "",
+        "info": {
+            "dmg": 10,
+            "lifesteal": 0,
+            "thorns": 0,
+            "crit": 1.1,
+            "chance": 50,
+            "mgc": 0,
+            "arm": 0,
+            "hlth": 100,
+            "mhlth": 100,
+            "regens": 120,
+            "regencntr": 0,
+            "hit": "",
+            "atc": 60,
+            "ats": 60,
+            "ress": 600,
+            "rescntr": 0,
+            "speed": 200,
+            "swmspeed": 100,
+            "killcount": 0,
+            "username": "Jimmy"
+        }
+    },
+    {
+        "username": "Heeyyy",
+        "password": "",
+        "info": {
+            "dmg": 10,
+            "lifesteal": 0,
+            "thorns": 0,
+            "crit": 1.1,
+            "chance": 50,
+            "mgc": 0,
+            "arm": 0,
+            "hlth": 100,
+            "mhlth": 100,
+            "regens": 120,
+            "regencntr": 0,
+            "hit": "",
+            "atc": 60,
+            "ats": 60,
+            "ress": 600,
+            "rescntr": 0,
+            "speed": 200,
+            "swmspeed": 100,
+            "killcount": 0,
+            "username": "Heeyyy"
+        }
+    },
+    {
+        "username": "2",
+        "password": "",
+        "info": {
+            "dmg": 10,
+            "lifesteal": 0,
+            "thorns": 0,
+            "crit": 1.1,
+            "chance": 50,
+            "mgc": 0,
+            "arm": 0,
+            "hlth": 100,
+            "mhlth": 100,
+            "regens": 120,
+            "regencntr": 23,
+            "hit": "",
+            "atc": 60,
+            "ats": 60,
+            "ress": 600,
+            "rescntr": 0,
+            "speed": 200,
+            "swmspeed": 100,
+            "killcount": 1,
+            "username": "2"
         }
     }
 ]
