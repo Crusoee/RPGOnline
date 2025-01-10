@@ -154,6 +154,11 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                     # If an npcs health is less than 0
                     if npcs[action['target']].health < 0:
                         initiator['dmg'] += 0.01
+                        if initiator['hlth'] + 5.0 < initiator['mhlth']:
+                            initiator['hlth'] += 5.0
+                        else:
+                            initiator['hlth'] = initiator['mhlth']
+
                         npcs.pop(action['target'], None)
 
                 if action['type'] == 'loot':
@@ -183,13 +188,17 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                 # Health Regeneration
                 if client['hlth'] < client['mhlth']:
                     if client['regencntr'] < client['regens']:
-                        client['regencntr'] += 1
+                        client['regencntr'] += client['regenbonus']
                     else:
                         client['regencntr'] = 0
                         client['hlth'] += 1
                     
                     if client['hlth'] > client['mhlth']:
                         client['hlth'] = client['mhlth']
+
+
+                if client_updates[addr]['swim'] == True:
+                    client['energy'] -= 1
 
                 client_info[addr] = client
 
@@ -240,23 +249,31 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
     # Player info sent to clients
     info = {
                 'dmg' : 10,
-
                 'lifesteal' : 0,
-                'thorns' : 0,
+                'poison' : 0,
 
                 'crit' : 1.1,
                 'chance' : 50,
 
-                'mgc' : 0,
+                'mgcdamage' : 0,
+                'maxmgc' : 500,
+                'mgc' : 500,
+                'mgcregen' : 120,
+                'mgcregenbonus' : 1,
+                'mgcctnr' : 0,
+                'mgcheal' : 5,
+                'mgcburn' : 0.1,
 
                 'arm' : 0,
+                'thorns' : 0,
 
                 'hlth' : 100,
                 'mhlth' : 100,
                 'regens' : 120,
                 'regencntr' : 0,
+                'regenbonus' : 1,
 
-                'hit' : '',
+                # 'hit' : '',
 
                 'atc' : 60,
                 'ats' : 60,
@@ -268,6 +285,15 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'swmspeed' : 100,
 
                 'killcount' : 0,
+
+                'attackingdist' : 50,
+                'trackingdist' : 1000,
+
+                'maxenergy' : 600,
+                'energy' : 600,
+                'energyregen' : 120,
+                'energyregenbonus' : 1,
+                'energycntr' : 0,
 
                 # 'inventory' : [],
 

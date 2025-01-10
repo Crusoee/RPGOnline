@@ -19,6 +19,10 @@ def game_loop(player, shared_memory):
 
     rl.hide_cursor()
 
+    """
+    LOADING IN TEXTURES AND FONTS, ETC...
+    """
+
     render_texture = rl.load_render_texture(SCREEN_WIDTH, SCREEN_HEIGHT)
 
     player_shaders = {
@@ -41,6 +45,10 @@ def game_loop(player, shared_memory):
 
     player_textures = {
         "click" : rl.load_texture("Textures\Click\glow.png"),
+        "healthframe" : rl.load_texture("Textures\Healthbar\\bar.png"),
+        "healthbar" : rl.load_texture("Textures\Healthbar\\bar2.png"),
+        "Energybar" : rl.load_texture("Textures\Healthbar\Energybar.png"),
+        "Magicbar" : rl.load_texture("Textures\Healthbar\Magicbar.png"),
 
         "name_font" : name_font
     }

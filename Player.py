@@ -16,6 +16,7 @@ EMPTY = {
 
 class Player():
     def __init__(self, color, locsize, speed, name):
+
         self.name = name
 
         self.respawn = rl.Vector2(locsize.x,locsize.y)
@@ -29,23 +30,31 @@ class Player():
         
         self.stats =    {  
                 'dmg' : 10,
-
                 'lifesteal' : 0,
-                'thorns' : 0,
+                'poison' : 0,
 
                 'crit' : 1.1,
                 'chance' : 50,
 
-                'mgc' : 0,
+                'mgcdamage' : 0,
+                'maxmgc' : 500,
+                'mgc' : 500,
+                'mgcregen' : 120,
+                'mgcregenbonus' : 1,
+                'mgcctnr' : 0,
+                'mgcheal' : 5,
+                'mgcburn' : 0.1,
 
                 'arm' : 0,
+                'thorns' : 0,
 
                 'hlth' : 100,
                 'mhlth' : 100,
                 'regens' : 120,
                 'regencntr' : 0,
+                'regenbonus' : 1,
 
-                'hit' : '',
+                # 'hit' : '',
 
                 'atc' : 60,
                 'ats' : 60,
@@ -57,10 +66,19 @@ class Player():
                 'swmspeed' : 100,
 
                 'killcount' : 0,
-                        }
+
+                'attackingdist' : 50,
+                'trackingdist' : 1000,
+
+                'maxenergy' : 600,
+                'energy' : 600,
+                'energyregen' : 120,
+                'energyregenbonus' : 1,
+                'energycntr' : 0,
+            }
         
-        self.distance = 50
-        self.tracking_distance = 1000
+        # self.distance = 50
+        # self.tracking_distance = 1000
         
         self.attacking = False
         self.can_move = True
@@ -124,12 +142,35 @@ class Player():
 
         # Ensure health ratio is clamped between 0 and 1
         health_ratio = max(0, min(1, self.stats['hlth'] / self.stats['mhlth']))
+        energy_ratio = max(0, min(1, self.stats['energy'] / self.stats['maxenergy']))
+        magic_ratio = max(0, min(1, self.stats['mgc'] / self.stats['maxmgc']))
         # Calculate base position for the health bar
         base_x = int(self.locsize.x  - 40 + PLAYER_WIDTH // 2)
         base_y = int(self.locsize.y  - 40)
         # Draw the health bar
-        rl.draw_rectangle(base_x, base_y, 80, 20, rl.RED)  # Background
-        rl.draw_rectangle(base_x, base_y, int(80 * health_ratio), 20, rl.GREEN)  # Health bar
+        # rl.draw_rectangle(base_x, base_y, 80, 20, rl.RED)  # Background
+        # rl.draw_rectangle(base_x, base_y, int(80 * health_ratio), 20, rl.GREEN)  # Health bar
+
+        rl.draw_texture_pro(textures["healthframe"], rl.Rectangle(0,0,textures["healthframe"].width, textures["healthframe"].height), 
+                    rl.Rectangle(base_x, base_y, 80, 20), 
+                    rl.Vector2(0,0),
+                    0.0, 
+                    rl.WHITE)
+        rl.draw_texture_pro(textures["healthbar"], rl.Rectangle(0,0,textures["healthbar"].width * health_ratio, textures["healthbar"].height), 
+                    rl.Rectangle(base_x, base_y, 80 * health_ratio, 20), 
+                    rl.Vector2(0,0),
+                    0.0, 
+                    rl.WHITE)
+        rl.draw_texture_pro(textures["Energybar"], rl.Rectangle(0,0,textures["Energybar"].width * energy_ratio, textures["Energybar"].height), 
+                    rl.Rectangle(base_x, base_y + 15, 80 * energy_ratio, 10), 
+                    rl.Vector2(0,0),
+                    0.0, 
+                    rl.WHITE)
+        rl.draw_texture_pro(textures["Magicbar"], rl.Rectangle(0,0,textures["Magicbar"].width * magic_ratio, textures["Magicbar"].height), 
+                    rl.Rectangle(base_x, base_y + 20, 80 * magic_ratio, 10), 
+                    rl.Vector2(0,0),
+                    0.0, 
+                    rl.WHITE)
 
         # rl.end_shader_mode()
 
@@ -182,10 +223,10 @@ class Player():
             self.action['type'] = None
             self.attacking = True
             target_distance = distance(self.locsize.x,self.locsize.y, player['x'],player['y'])
-            if target_distance < self.distance:
+            if target_distance < self.stats['attackingdist']:
                 self.action['type'] = 'attack'
                 self.coordinate = None
-            elif target_distance > self.tracking_distance:
+            elif target_distance > self.stats['trackingdist']:
                 self.action = EMPTY
                 self.attacking = False
             else:
@@ -197,10 +238,10 @@ class Player():
             self.action['type'] = None
             self.attacking = True
             target_distance = distance(self.locsize.x,self.locsize.y, self.action['x'],self.action['y'])
-            if target_distance < self.distance:
+            if target_distance < self.stats['attackingdist']:
                 self.action['type'] = 'attacknpc'
                 self.coordinate = None
-            elif target_distance > self.tracking_distance:
+            elif target_distance > self.stats['trackingdist']:
                 self.action = EMPTY
                 self.attacking = False
             else:

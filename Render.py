@@ -83,9 +83,20 @@ def draw_players(shared_memory,player_textures):
             # Calculate base position for the health bar
             base_x = int(player['x'] - 40 + PLAYER_WIDTH // 2)
             base_y = int(player['y'] - 40)
-            # Draw the health bar
-            rl.draw_rectangle(base_x, base_y, 80, 20, rl.RED)  # Background
-            rl.draw_rectangle(base_x, base_y, int(80 * health_ratio), 20, rl.GREEN)  # Health bar
+            # # Draw the health bar
+            # rl.draw_rectangle(base_x, base_y, 80, 20, rl.RED)  # Background
+            # rl.draw_rectangle(base_x, base_y, int(80 * health_ratio), 20, rl.GREEN)  # Health bar
+
+            rl.draw_texture_pro(player_textures["healthframe"], rl.Rectangle(0,0,player_textures["healthframe"].width, player_textures["healthframe"].height), 
+                        rl.Rectangle(base_x, base_y, 80, 20), 
+                        rl.Vector2(0,0),
+                        0.0, 
+                        rl.WHITE)
+            rl.draw_texture_pro(player_textures["healthbar"], rl.Rectangle(0,0,player_textures["healthbar"].width * health_ratio, player_textures["healthbar"].height), 
+                        rl.Rectangle(base_x, base_y, 80 * health_ratio, 20), 
+                        rl.Vector2(0,0),
+                        0.0, 
+                        rl.WHITE)
 
             if player['swim'] == True:
                 if key == shared_memory['player']['action']['target']:
