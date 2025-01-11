@@ -49,6 +49,7 @@ def game_loop(player, shared_memory):
         "healthbar" : rl.load_texture("Textures\Healthbar\\bar2.png"),
         "Energybar" : rl.load_texture("Textures\Healthbar\Energybar.png"),
         "Magicbar" : rl.load_texture("Textures\Healthbar\Magicbar.png"),
+        "player" : rl.load_texture("Textures\Player\character2.png"),
 
         "name_font" : name_font
     }
@@ -125,6 +126,9 @@ def game_loop(player, shared_memory):
                                'y' : player.locsize.y,
                                'nme' : player.name,
                                'swim' : player.in_water,
+                               'angle' : player.angle,
+                                'ismoving' : player.is_moving,
+                                'animcntr' : player.animation_cntr,
                                'action' : player.action}
 
     shared_memory['running'] = False
@@ -149,6 +153,9 @@ def main() -> int:
                                 'y' : player.locsize.y,
                                 'nme' : username,
                                 'swim' : player.in_water,
+                                'angle' : player.angle,
+                                'ismoving' : player.is_moving,
+                                'animcntr' : player.animation_cntr,
                                 'action' : player.action}
         shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
         shared_memory["playersinfo"] = manager.list([{}])

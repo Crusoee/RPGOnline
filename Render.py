@@ -3,6 +3,7 @@ import raylib as raylib
 from CONSTANTS import NUM_CHUNKS, CHUNK_SIZE, TILE_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH, SCREEN_WIDTH
 from SimplexNoise import generate_terrain_chunk
 from Helper import distance
+import math
 
 water = -.1
 shallow = 0
@@ -99,15 +100,108 @@ def draw_players(shared_memory,player_textures):
                         rl.WHITE)
 
             if player['swim'] == True:
-                if key == shared_memory['player']['action']['target']:
-                    raylib.DrawRectangle(int(player['x']), int(player['y']) + PLAYER_HEIGHT // 2, PLAYER_WIDTH, PLAYER_HEIGHT // 2, rl.YELLOW)
+                if player['ismoving']:
+                    if -135 < player['angle'] <= -45:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),0,256, 150), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,player_textures['player'].width/10, player_textures['player'].height/10 - 47), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if -45 < player['angle'] <= 45:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 3),256, 150), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,player_textures['player'].width/10, player_textures['player'].height/10 - 47), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if 45 < player['angle'] <= 135:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 1),256, 150), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,player_textures['player'].width/10, player_textures['player'].height/10 - 47), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if player['angle'] <= -135 or player['angle'] > 135:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 2),256, 150), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,player_textures['player'].width/10, player_textures['player'].height/10 - 47), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
                 else:
-                    raylib.DrawRectangle(int(player['x']), int(player['y']) + PLAYER_HEIGHT // 2, PLAYER_WIDTH, PLAYER_HEIGHT // 2, rl.SKYBLUE)
+                    if -135 < player['angle'] <= -45:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((0),0,256, 150), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,player_textures['player'].width/10, player_textures['player'].height/10 - 47), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if -45 < player['angle'] <= 45:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((0),(256 * 3),256, 150), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,player_textures['player'].width/10, player_textures['player'].height/10 - 47), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if 45 < player['angle'] <= 135:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((0),(256 * 1),256, 150), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,player_textures['player'].width/10, player_textures['player'].height/10 - 47), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if player['angle'] <= -135 or player['angle'] > 135:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((0),(256 * 2),256, 150), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,player_textures['player'].width/10, player_textures['player'].height/10 - 47), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
             else:
-                if key == shared_memory['player']['action']['target']:
-                    raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.YELLOW)
+                if player['ismoving']:
+                    if -135 < player['angle'] <= -45:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),0,256, 256), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10,player_textures['player'].width/10, player_textures['player'].height/10), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if -45 < player['angle'] <= 45:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 3),256, 256), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10,player_textures['player'].width/10, player_textures['player'].height/10), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if 45 < player['angle'] <= 135:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 1),256, 256), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10,player_textures['player'].width/10, player_textures['player'].height/10), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if player['angle'] <= -135 or player['angle'] > 135:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 2),256, 256), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10,player_textures['player'].width/10, player_textures['player'].height/10), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
                 else:
-                    raylib.DrawRectangle(int(player['x']), int(player['y']), PLAYER_WIDTH, PLAYER_HEIGHT, rl.SKYBLUE)
+                    if -135 < player['angle'] <= -45:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle(0,0,256, 256), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10,player_textures['player'].width/10, player_textures['player'].height/10), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if -45 < player['angle'] <= 45:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle(0,(256 * 3),256, 256), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10,player_textures['player'].width/10, player_textures['player'].height/10), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if 45 < player['angle'] <= 135:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle(0,(256 * 1),256, 256), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10,player_textures['player'].width/10, player_textures['player'].height/10), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+                    if player['angle'] <= -135 or player['angle'] > 135:
+                        rl.draw_texture_pro(player_textures['player'], rl.Rectangle(0,(256 * 2),256, 256), 
+                                            rl.Rectangle(player['x'] - 31,player['y'] - 10,player_textures['player'].width/10, player_textures['player'].height/10), 
+                                            rl.Vector2(0,0),
+                                            0.0, 
+                                            rl.WHITE)
+
         except KeyError as e:
             print("Error Occurred in draw_players: ", e)
 

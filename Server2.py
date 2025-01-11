@@ -109,6 +109,11 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                     with client_data_lock:
                         target = client_info[action['target']]
 
+                    if initiator['energy'] - initiator['energyconsumption'] < 0:
+                        continue
+
+                    initiator['energy'] -= initiator['energyconsumption']
+
                     # Damage Calculation and Crit
                     # How much true damage initiator did to target
                     true_damage = round(initiator['dmg'] * (initiator['crit'] if random.randint(1, initiator['chance']) == 1 else 1), 2)
@@ -175,7 +180,7 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                 client = client_info[addr]
 
                 # Melee Attacking
-                if client['atc'] < client['ats']:
+                if client['atc'] * client['hinderedspeedmult'] < client['ats']:
                     client['atc'] += 1
 
                 # Respawning
@@ -196,25 +201,30 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                     if client['hlth'] > client['mhlth']:
                         client['hlth'] = client['mhlth']
 
-                # Energy Regeneration
-                if client_updates[addr]['swim'] == True:
-                    if client['energyconsumptionratecntr'] >= client['energyconsumptionrate']:
-                        client['energy'] -= client['energyconsumption']
-                        client['energyconsumptionratecntr'] = 0
-                        if client['energy'] <= 0:
-                            client['hlth'] -= client['mhlth'] // 8
-                            client['energy'] = 0
+                # Energy Regeneration NEEDS A LOCK
+                with client_data_lock:
+                    if client_updates[addr]['swim'] == True:
+                        if client['energyconsumptionratecntr'] >= client['energyconsumptionrate']:
+                            client['energy'] -= client['energyconsumption']
+                            client['energyconsumptionratecntr'] = 0
+                            if client['energy'] <= 0:
+                                client['hlth'] -= client['mhlth'] // 8
+                                client['energy'] = 0
 
+                        else:
+                            client['energyconsumptionratecntr'] += 1
                     else:
-                        client['energyconsumptionratecntr'] += 1
-                else:
-                    if client['energycntr'] >= client['energyregen']:
-                        client['energy'] += client['energyregenbonus']
-                        client['energycntr'] = 0
-                    else:
-                        client['energycntr'] += 1
+                        if client['energycntr'] >= client['energyregen']:
+                            if client['energy'] + client['energyregenbonus'] < client['maxenergy']:
+                                client['energy'] += client['energyregenbonus']
+                                client['energycntr'] = 0
+                            else:
+                                client['energy'] = client['maxenergy']
+                                client['energycntr'] = 0
+                        else:
+                            client['energycntr'] += 1
 
-                if client['energy'] <= client['maxenergy'] // 10:
+                if client['energy'] <= int(client['maxenergy'] / 6):
                     client['hinderedspeedmult'] = client['lowenergyspeed']
                 else:
                     client['hinderedspeedmult'] = 1
@@ -262,7 +272,9 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'x' : 0,
                 'y' : 0,
                 'nme' : '',
-                'swim' : False
+                'swim' : False,
+                'angle' : -90,
+                'ismoving' : 0
             }
 
     # Player info sent to clients
@@ -425,6 +437,9 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             info['y'] = updates[0]['y']
             info['nme'] = updates[0]['nme']
             info['swim'] = updates[0]['swim']
+            info['angle'] = updates[0]['angle']
+            info['ismoving'] = updates[0]['ismoving']
+            info['animcntr'] = updates[0]['animcntr']
 
             # If an action is created by the client, add it to the queue
             if updates[0]['action']['type'] != None and client_info[username]['hlth'] > 0:
@@ -434,9 +449,11 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             # Finally, update the client_updates dict
             client_updates[username] = info
 
-        except (TimeoutError, EOFError, KeyError, ConnectionResetError) as e:
-            print(f"Error processing data from {username}: {e}")
+        except (TimeoutError, KeyError, ConnectionResetError) as e:
+            print(f"Error processing data from {username}: {traceback.format_exc()}")
             break
+        except (EOFError) as e:
+            print("End of input...", e)
 
     """
     SAVE DATA AFTER CLIENT EXITING

@@ -21,6 +21,9 @@ class Player():
 
         self.respawn = rl.Vector2(locsize.x,locsize.y)
 
+        self.angle = -90
+        self.animation_cntr = 0
+
         self.action = {
                 'type' : None,
                 'target' :None,
@@ -89,6 +92,7 @@ class Player():
         
         self.attacking = False
         self.can_move = True
+        self.is_moving = False
         self.in_water = False
 
         self.speed = speed
@@ -105,7 +109,7 @@ class Player():
             rl.Vector2(SCREEN_WIDTH/2 - self.locsize.width/2, SCREEN_HEIGHT/2),  # Offset from the center of the screen
             rl.Vector2(self.locsize.x, self.locsize.y),      # The target position in the world
             0.0,                   # Camera rotation in degrees
-            1.0                    # Camera zoom (1.0 is default)
+            1.3                    # Camera zoom (1.0 is default)
         )
 
     def draw(self, textures, player_shaders):
@@ -136,10 +140,126 @@ class Player():
             )
 
         # raylib.DrawRectangleRec(self.prev_locsize, rl.BROWN)
+        # if self.in_water:
+        #     raylib.DrawRectangleRec(rl.Rectangle(self.locsize.x,self.locsize.y + PLAYER_HEIGHT / 2,PLAYER_WIDTH,PLAYER_HEIGHT / 2), self.color)
+        # else:
+        # raylib.DrawRectangleRec(self.locsize, self.color)
+
+        if self.animation_cntr <= -4:
+            self.animation_cntr = 0
+
         if self.in_water:
-            raylib.DrawRectangleRec(rl.Rectangle(self.locsize.x,self.locsize.y + PLAYER_HEIGHT / 2,PLAYER_WIDTH,PLAYER_HEIGHT / 2), self.color)
+            if self.coordinate != None:
+                self.angle = math.degrees(math.atan2(-(self.coordinate.y - self.locsize.y + self.base.y), (self.coordinate.x - self.locsize.x + self.base.x)))
+                if -135 < self.angle <= -45:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animation_cntr)),0,256, 150), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if -45 < self.angle <= 45:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animation_cntr)),(256 * 3),256, 150), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if 45 < self.angle <= 135:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animation_cntr)),(256 * 1),256, 150), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if self.angle <= -135 or self.angle > 135:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animation_cntr)),(256 * 2),256, 150), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                    
+                self.animation_cntr -= rl.get_frame_time() * (self.stats['swmspeed'] / 25 * self.stats['hinderedspeedmult'])
+            else:
+                if -135 < self.angle <= -45:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((0),0,256, 150), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if -45 < self.angle <= 45:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((0),(256 * 3),256, 150), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if 45 < self.angle <= 135:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((0),(256 * 1),256, 150), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if self.angle <= -135 or self.angle > 135:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((0),(256 * 2),256, 150), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+
+                self.animation_cntr = 0
         else:
-            raylib.DrawRectangleRec(self.locsize, self.color)
+            if self.coordinate != None:
+                self.angle = math.degrees(math.atan2(-(self.coordinate.y - self.locsize.y + self.base.y), (self.coordinate.x - self.locsize.x + self.base.x)))
+                if -135 < self.angle <= -45:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animation_cntr)),0,256, 256), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10,textures['player'].width/10, textures['player'].height/10), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if -45 < self.angle <= 45:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animation_cntr)),(256 * 3),256, 256), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10,textures['player'].width/10, textures['player'].height/10), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if 45 < self.angle <= 135:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animation_cntr)),(256 * 1),256, 256), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10,textures['player'].width/10, textures['player'].height/10), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if self.angle <= -135 or self.angle > 135:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animation_cntr)),(256 * 2),256, 256), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10,textures['player'].width/10, textures['player'].height/10), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                    
+                self.animation_cntr -= rl.get_frame_time() * (self.stats['speed'] / 25 * self.stats['hinderedspeedmult'])
+            else:
+                if -135 < self.angle <= -45:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle(0,0,256, 256), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10,textures['player'].width/10, textures['player'].height/10), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if -45 < self.angle <= 45:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle(0,(256 * 3),256, 256), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10,textures['player'].width/10, textures['player'].height/10), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if 45 < self.angle <= 135:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle(0,(256 * 1),256, 256), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10,textures['player'].width/10, textures['player'].height/10), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+                if self.angle <= -135 or self.angle > 135:
+                    rl.draw_texture_pro(textures['player'], rl.Rectangle(0,(256 * 2),256, 256), 
+                                        rl.Rectangle(self.locsize.x - 31,self.locsize.y - 10,textures['player'].width/10, textures['player'].height/10), 
+                                        rl.Vector2(0,0),
+                                        0.0, 
+                                        rl.WHITE)
+
+                self.animation_cntr = 0
 
 
         # rl.begin_shader_mode(player_shaders['invert_text'])
@@ -273,6 +393,7 @@ class Player():
         
         # moving depending on if there is a coordinate to follow
         if self.coordinate != None and self.can_move:
+            self.is_moving = True
             displaced = rl.Vector2(self.coordinate.x - self.locsize.x + self.base.x, self.coordinate.y - self.locsize.y + self.base.y)
             length = math.sqrt(displaced.x**2 + displaced.y**2)
             if length != 0:
@@ -281,6 +402,8 @@ class Player():
                 self.locsize.y += dir_vec.y * self.speed * raylib.GetFrameTime()
                 if length < 150.0 * raylib.GetFrameTime():
                     self.coordinate = None
+        else:
+            self.is_moving = False
 
 
         if raylib.IsKeyPressed(raylib.KEY_V):
