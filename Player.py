@@ -62,6 +62,8 @@ class Player():
                 'ress' : 600,
                 'rescntr' : 0,
 
+                'hinderedspeedmult' : 1,
+
                 'speed' : 200,
                 'swmspeed' : 100,
 
@@ -70,11 +72,16 @@ class Player():
                 'attackingdist' : 50,
                 'trackingdist' : 1000,
 
-                'maxenergy' : 600,
-                'energy' : 600,
+                'maxenergy' : 300,
+                'energy' : 300,
                 'energyregen' : 120,
-                'energyregenbonus' : 1,
                 'energycntr' : 0,
+                'energyregenbonus' : 10,
+
+                'energyconsumption' : 20,
+                'energyconsumptionrate' : 60,
+                'energyconsumptionratecntr' : 0,
+                'lowenergyspeed' : 0.5,
             }
         
         # self.distance = 50
@@ -161,6 +168,11 @@ class Player():
                     rl.Vector2(0,0),
                     0.0, 
                     rl.WHITE)
+        rl.draw_texture_pro(textures["healthframe"], rl.Rectangle(0,0,textures["healthframe"].width, textures["healthframe"].height), 
+                    rl.Rectangle(base_x, base_y + 12, 80, 20), 
+                    rl.Vector2(0,0),
+                    0.0, 
+                    rl.WHITE)
         rl.draw_texture_pro(textures["Energybar"], rl.Rectangle(0,0,textures["Energybar"].width * energy_ratio, textures["Energybar"].height), 
                     rl.Rectangle(base_x, base_y + 15, 80 * energy_ratio, 10), 
                     rl.Vector2(0,0),
@@ -211,10 +223,10 @@ class Player():
 
         # Changing the speed of your player depending on what terrain their standing on
         if value < Render.water:
-            self.speed = self.stats['swmspeed']
+            self.speed = self.stats['swmspeed'] * self.stats['hinderedspeedmult']
             self.in_water = True
         else:
-            self.speed = self.stats['speed']
+            self.speed = self.stats['speed'] * self.stats['hinderedspeedmult']
             self.in_water = False
 
         # If there's a player target, follow it

@@ -196,9 +196,28 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                     if client['hlth'] > client['mhlth']:
                         client['hlth'] = client['mhlth']
 
-
+                # Energy Regeneration
                 if client_updates[addr]['swim'] == True:
-                    client['energy'] -= 1
+                    if client['energyconsumptionratecntr'] >= client['energyconsumptionrate']:
+                        client['energy'] -= client['energyconsumption']
+                        client['energyconsumptionratecntr'] = 0
+                        if client['energy'] <= 0:
+                            client['hlth'] -= client['mhlth'] // 8
+                            client['energy'] = 0
+
+                    else:
+                        client['energyconsumptionratecntr'] += 1
+                else:
+                    if client['energycntr'] >= client['energyregen']:
+                        client['energy'] += client['energyregenbonus']
+                        client['energycntr'] = 0
+                    else:
+                        client['energycntr'] += 1
+
+                if client['energy'] <= client['maxenergy'] // 10:
+                    client['hinderedspeedmult'] = client['lowenergyspeed']
+                else:
+                    client['hinderedspeedmult'] = 1
 
                 client_info[addr] = client
 
@@ -281,6 +300,8 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'ress' : 600,
                 'rescntr' : 0,
 
+                'hinderedspeedmult' : 1,
+
                 'speed' : 200,
                 'swmspeed' : 100,
 
@@ -289,11 +310,16 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'attackingdist' : 50,
                 'trackingdist' : 1000,
 
-                'maxenergy' : 600,
-                'energy' : 600,
+                'maxenergy' : 300,
+                'energy' : 300,
                 'energyregen' : 120,
-                'energyregenbonus' : 1,
                 'energycntr' : 0,
+                'energyregenbonus' : 10,
+
+                'energyconsumption' : 20,
+                'energyconsumptionrate' : 60,
+                'energyconsumptionratecntr' : 0,
+                'lowenergyspeed' : 0.5,
 
                 # 'inventory' : [],
 
