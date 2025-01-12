@@ -193,10 +193,10 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                 # Health Regeneration
                 if client['hlth'] < client['mhlth']:
                     if client['regencntr'] < client['regens']:
-                        client['regencntr'] += client['regenbonus']
+                        client['regencntr'] += 1
                     else:
                         client['regencntr'] = 0
-                        client['hlth'] += 1
+                        client['hlth'] += client['regenbonus']
                     
                     if client['hlth'] > client['mhlth']:
                         client['hlth'] = client['mhlth']
@@ -205,11 +205,11 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                 with client_data_lock:
                     if client_updates[addr]['swim'] == True:
                         if client['energyconsumptionratecntr'] >= client['energyconsumptionrate']:
-                            client['energy'] -= client['energyconsumption']
-                            client['energyconsumptionratecntr'] = 0
                             if client['energy'] <= 0:
                                 client['hlth'] -= client['mhlth'] // 8
                                 client['energy'] = 0
+                            client['energy'] -= client['energyconsumption']
+                            client['energyconsumptionratecntr'] = 0
 
                         else:
                             client['energyconsumptionratecntr'] += 1
@@ -247,9 +247,14 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
             elapsed = time.time() - start_time
             if elapsed < TICK_RATE:
                 time.sleep(TICK_RATE - elapsed)
-        except (TimeoutError, EOFError, KeyError, ConnectionResetError, ConnectionAbortedError) as e:
+        except (TimeoutError, EOFError, KeyError, ConnectionResetError) as e:
             print(f"Error processing data!", traceback.format_exc())
             print(len(client_info), client_info.keys())
+        except (ConnectionAbortedError) as e:
+            del client_updates[addr]
+            del client_info[addr]
+
+
 
 def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info):
     print(f"Connection with {addr[0]} on port {addr[1]} started...")
@@ -286,7 +291,7 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'crit' : 1.1,
                 'chance' : 50,
 
-                'mgcdamage' : 0,
+                'mgcdamage' : 18,
                 'maxmgc' : 500,
                 'mgc' : 500,
                 'mgcregen' : 120,
@@ -314,13 +319,13 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
 
                 'hinderedspeedmult' : 1,
 
-                'speed' : 200,
-                'swmspeed' : 100,
+                'speed' : 130,
+                'swmspeed' : 65,
 
                 'killcount' : 0,
 
                 'attackingdist' : 50,
-                'trackingdist' : 1000,
+                'trackingdist' : 800,
 
                 'maxenergy' : 300,
                 'energy' : 300,
@@ -454,6 +459,7 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             break
         except (EOFError) as e:
             print("End of input...", e)
+            break
 
     """
     SAVE DATA AFTER CLIENT EXITING

@@ -40,7 +40,9 @@ class Menu:
     
 
     stats = False
+    stats_scroll = 0.0
     inventory = False
+
 
     def __init__(self, screen_width, screen_height, menu_textures):
         self.buttons = []
@@ -59,10 +61,16 @@ class Menu:
                                 rl.Rectangle(0,0,250,600), 
                                 rl.Vector2(0,0), 0.0, rl.WHITE)    
 
-            cntr = 60
+            if raylib.GetMouseWheelMove() > 0:
+                self.stats_scroll += 10
+            elif raylib.GetMouseWheelMove() < 0:
+                self.stats_scroll -= 10
+
+            cntr = 50 + self.stats_scroll
             for key, item in player.stats.items():
                 cntr += 22
-                rl.draw_text_ex(self.menu_textures["written_font"], f"{key}: {player.stats[key]}", rl.Vector2(35, cntr), 40, 0.0, rl.BLACK)
+                if 50 < cntr < 500:
+                    rl.draw_text_ex(self.menu_textures["written_font"], f"{key}: {player.stats[key]}", rl.Vector2(35, cntr), 40, 0.0, rl.BLACK)
         else:
             rl.draw_texture_pro(self.menu_textures["parchment"], 
                                 rl.Rectangle(0,0,self.menu_textures["parchment"].width,140), 
@@ -91,7 +99,16 @@ class Menu:
         # for button in self.buttons:
         #     button.render()
 
-    def logic(self):
+    def logic(self, player):
+
+        if not self.buttons[0].is_on:
+            if raylib.GetMouseWheelMove() > 0 and player.zoom < 1.5:
+                player.zoom += 0.1
+                player.camera.zoom = player.zoom
+            elif raylib.GetMouseWheelMove() < 0 and player.zoom > 1.0:
+                player.zoom -= 0.1
+                player.camera.zoom = player.zoom
+
         if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_LEFT):
             mouse_coord = rl.get_mouse_position()
             for button in self.buttons:

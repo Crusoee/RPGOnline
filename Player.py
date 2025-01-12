@@ -17,6 +17,8 @@ EMPTY = {
 class Player():
     def __init__(self, color, locsize, speed, name):
 
+        self.zoom = 1.3
+
         self.name = name
 
         self.respawn = rl.Vector2(locsize.x,locsize.y)

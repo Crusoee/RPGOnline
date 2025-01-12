@@ -11,6 +11,7 @@ from Menu import Menu
 
 # --- main ---
 def game_loop(player, shared_memory):
+    raylib.SetConfigFlags(rl.FLAG_WINDOW_RESIZABLE)
     raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, b"RPG Online")
     # rl.toggle_fullscreen()
     raylib.SetWindowPosition(100,100)
@@ -110,7 +111,7 @@ def game_loop(player, shared_memory):
         # -------------Mechanics-------------------
 
         # Menu
-        menu.logic()
+        menu.logic(player)
         
         # Updating Player Stats
         player.update(shared_memory)
