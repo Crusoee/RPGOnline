@@ -36,7 +36,7 @@
             "maxenergy": 300,
             "energy": 300,
             "energyregen": 120,
-            "energycntr": 2,
+            "energycntr": 105,
             "energyregenbonus": 10,
             "energyconsumption": 20,
             "energyconsumptionrate": 60,

@@ -5,9 +5,12 @@ import zlib
 import time
 import datetime
 import random
-import asyncio
 import traceback
 import json
+
+import asyncio
+import aiofiles
+# import copy
 
 from NPC import NPC
 from SimplexNoise import simplex_noise
@@ -18,7 +21,7 @@ PORT = 65432
 TICK_RATE = 1 / 20 # 60 Hz
 MAX_PLAYERS = 80
 
-def send_message(conn, data, use_compression=True):
+async def send_message(writer: asyncio.StreamWriter, data, use_compression=True):
     # Serialize data
     serialized_data = pickle.dumps(data)
     
@@ -28,22 +31,25 @@ def send_message(conn, data, use_compression=True):
     
     # Send total size of the data first
     total_size = len(serialized_data)
-    conn.sendall(total_size.to_bytes(4, 'big'))
+    writer.write(total_size.to_bytes(4, 'big'))
+    await writer.drain()  # Ensure the size is sent
     
     # Send data in chunks
     chunk_size = 1024
     for i in range(0, total_size, chunk_size):
         chunk = serialized_data[i:i + chunk_size]
-        conn.sendall(chunk)
+        writer.write(chunk)
+        await writer.drain()  # Ensure the chunk is sent
 
-def get_message(conn, use_compression=True):
-    # Receive total size of the data
-    total_size = int.from_bytes(conn.recv(4), 'big')
+async def get_message(reader: asyncio.StreamReader, use_compression=True):
+    # Receive total size of the data (first 4 bytes)
+    size_data = await reader.readexactly(4)  # Read exactly 4 bytes for size
+    total_size = int.from_bytes(size_data, 'big')
     
     # Receive data in chunks
     received_data = b''
     while len(received_data) < total_size:
-        chunk = conn.recv(min(1024, total_size - len(received_data)))
+        chunk = await reader.read(min(1024, total_size - len(received_data)))
         if not chunk:
             raise ConnectionError("Connection closed while receiving data")
         received_data += chunk
@@ -68,7 +74,7 @@ def match_dict(dictionary1, dictionary2_set):
                 dict_copy[key1] = item1
     return dict_copy
 
-def game_loop(client_updates, action_queue, client_info):
+async def game_loop(client_data, action_queue, client_stats, client_con):
     """
     NPCs
     TESTING PHASE:
@@ -90,7 +96,7 @@ def game_loop(client_updates, action_queue, client_info):
             """
             start_time = time.time()
 
-            client_info_mutable = dict(client_info)
+            # client_stats = dict(client_stats)
             
 
             """
@@ -102,70 +108,70 @@ def game_loop(client_updates, action_queue, client_info):
                 # Get the next action on the queue
                 action = action_queue.get()
                 # Keep tabs on who initiated the action
-                # initiator = client_info_mutable[action['initiator']]
+                # initiator = client_stats[action['initiator']]
 
                 """
                 If a player attacks another player
                 """
 
-                if action['type'] == 'attack' and client_info_mutable[action['initiator']]['atc'] >= client_info_mutable[action['initiator']]['ats'] and action['target'] in client_info.keys():
+                if action['type'] == 'attack' and client_stats[action['initiator']]['atc'] >= client_stats[action['initiator']]['ats'] and action['target'] in client_stats.keys():
                     # with client_data_lock:
-                    # target = client_info[action['target']]
+                    # target = client_stats[action['target']]
 
-                    if client_info_mutable[action['initiator']]['energy'] - client_info_mutable[action['initiator']]['energyconsumption'] < 0:
+                    if client_stats[action['initiator']]['energy'] - client_stats[action['initiator']]['energyconsumption'] < 0:
                         continue
 
-                    client_info_mutable[action['initiator']]['energy'] -= client_info_mutable[action['initiator']]['energyconsumption']
+                    client_stats[action['initiator']]['energy'] -= client_stats[action['initiator']]['energyconsumption']
 
                     # Damage Calculation and Crit
                     # How much true damage initiator did to target
-                    true_damage = round(client_info_mutable[action['initiator']]['dmg'] * (client_info_mutable[action['initiator']]['crit'] if random.randint(1, client_info_mutable[action['initiator']]['chance']) == 1 else 1), 2)
+                    true_damage = round(client_stats[action['initiator']]['dmg'] * (client_stats[action['initiator']]['crit'] if random.randint(1, client_stats[action['initiator']]['chance']) == 1 else 1), 2)
                     # How much damage initiator did to target after armor calculation
-                    damage = round(true_damage - true_damage * client_info_mutable[action['target']]['arm'] / true_damage, 2)
+                    damage = round(true_damage - true_damage * client_stats[action['target']]['arm'] / true_damage, 2)
                     # How much reversal damage target did to initiator
-                    thorns = round(damage * client_info_mutable[action['target']]['thorns'], 2)
+                    thorns = round(damage * client_stats[action['target']]['thorns'], 2)
                     # How much life steal initiator gets from damage
-                    lifesteal = round(damage * client_info_mutable[action['initiator']]['lifesteal'], 2)
+                    lifesteal = round(damage * client_stats[action['initiator']]['lifesteal'], 2)
                     # How much life steal target gets from reversal damage
-                    target_lifesteal = round(thorns * client_info_mutable[action['target']]['lifesteal'], 2)
+                    target_lifesteal = round(thorns * client_stats[action['target']]['lifesteal'], 2)
 
-                    client_info_mutable[action['target']]['hlth'] -= damage
-                    client_info_mutable[action['target']]['hlth'] += target_lifesteal
-                    client_info_mutable[action['initiator']]['hlth'] -= thorns
-                    client_info_mutable[action['initiator']]['hlth'] += lifesteal
+                    client_stats[action['target']]['hlth'] -= damage
+                    client_stats[action['target']]['hlth'] += target_lifesteal
+                    client_stats[action['initiator']]['hlth'] -= thorns
+                    client_stats[action['initiator']]['hlth'] += lifesteal
 
-                    if client_info_mutable[action['target']]['hlth'] > client_info_mutable[action['target']]['mhlth']:
-                        client_info_mutable[action['target']]['hlth'] = client_info_mutable[action['target']]['mhlth']
+                    if client_stats[action['target']]['hlth'] > client_stats[action['target']]['mhlth']:
+                        client_stats[action['target']]['hlth'] = client_stats[action['target']]['mhlth']
 
-                    if client_info_mutable[action['initiator']]['hlth'] > client_info_mutable[action['initiator']]['mhlth']:
-                        client_info_mutable[action['initiator']]['hlth'] = client_info_mutable[action['initiator']]['mhlth']
+                    if client_stats[action['initiator']]['hlth'] > client_stats[action['initiator']]['mhlth']:
+                        client_stats[action['initiator']]['hlth'] = client_stats[action['initiator']]['mhlth']
 
                     # Reset attack Counter
-                    client_info_mutable[action['initiator']]['atc'] = 0
+                    client_stats[action['initiator']]['atc'] = 0
 
                     # Add 1 to a players kill count
-                    if client_info_mutable[action['target']]['hlth'] <= 0:
-                        client_info_mutable[action['initiator']]['killcount'] += 1
+                    if client_stats[action['target']]['hlth'] <= 0:
+                        client_stats[action['initiator']]['killcount'] += 1
 
                     # Reset the target
                     # with client_data_lock:
-                    # client_info[action['target']] = target
+                    # client_stats[action['target']] = target
 
                 """
                 If a player attacks an NPC
                 """
-                if action['type'] == 'attacknpc' and client_info_mutable[action['initiator']]['atc'] >= client_info_mutable[action['initiator']]['ats'] and action['target'] in npcs.keys():
-                    npcs[action['target']].health -= client_info_mutable[action['initiator']]['dmg']
+                if action['type'] == 'attacknpc' and client_stats[action['initiator']]['atc'] >= client_stats[action['initiator']]['ats'] and action['target'] in npcs.keys():
+                    npcs[action['target']].health -= client_stats[action['initiator']]['dmg']
                     # Reset attack Counter
-                    client_info_mutable[action['initiator']]['atc'] = 0
+                    client_stats[action['initiator']]['atc'] = 0
 
                     # If an npcs health is less than 0
                     if npcs[action['target']].health < 0:
-                        client_info_mutable[action['initiator']]['dmg'] += 0.01
-                        if client_info_mutable[action['initiator']]['hlth'] + 5.0 < client_info_mutable[action['initiator']]['mhlth']:
-                            client_info_mutable[action['initiator']]['hlth'] += 5.0
+                        client_stats[action['initiator']]['dmg'] += 0.01
+                        if client_stats[action['initiator']]['hlth'] + 5.0 < client_stats[action['initiator']]['mhlth']:
+                            client_stats[action['initiator']]['hlth'] += 5.0
                         else:
-                            client_info_mutable[action['initiator']]['hlth'] = client_info_mutable[action['initiator']]['mhlth']
+                            client_stats[action['initiator']]['hlth'] = client_stats[action['initiator']]['mhlth']
 
                         npcs.pop(action['target'], None)
 
@@ -173,109 +179,113 @@ def game_loop(client_updates, action_queue, client_info):
                     ...
 
                 # with client_data_lock:
-                # client_info[action['initiator']] = initiator
+                # client_stats[action['initiator']] = initiator
 
             """
             TICK UPDATES
             """
-            for addr, stats in client_info.items():
+            for addr, stats in client_stats.items():
 
-                # client = client_info[addr]
+                # client = client_stats[addr]
 
                 # Melee Attacking
-                if client_info_mutable[addr]['atc'] * client_info_mutable[addr]['hinderedspeedmult'] < client_info_mutable[addr]['ats']:
-                    client_info_mutable[addr]['atc'] += 1
+                if client_stats[addr]['atc'] * client_stats[addr]['hinderedspeedmult'] < client_stats[addr]['ats']:
+                    client_stats[addr]['atc'] += 1
 
                 # Respawning
-                if client_info_mutable[addr]['hlth'] <= 0:
-                    client_info_mutable[addr]['rescntr'] += 1
-                    if client_info_mutable[addr]['rescntr'] >= client_info_mutable[addr]['ress']:
-                        client_info_mutable[addr]['hlth'] = client_info_mutable[addr]['mhlth']
-                        client_info_mutable[addr]['rescntr'] = 0
+                if client_stats[addr]['hlth'] <= 0:
+                    client_stats[addr]['rescntr'] += 1
+                    if client_stats[addr]['rescntr'] >= client_stats[addr]['ress']:
+                        client_stats[addr]['hlth'] = client_stats[addr]['mhlth']
+                        client_stats[addr]['rescntr'] = 0
 
                 # Health Regeneration
-                if client_info_mutable[addr]['hlth'] < client_info_mutable[addr]['mhlth']:
-                    if client_info_mutable[addr]['regencntr'] < client_info_mutable[addr]['regens']:
-                        client_info_mutable[addr]['regencntr'] += 1
+                if client_stats[addr]['hlth'] < client_stats[addr]['mhlth']:
+                    if client_stats[addr]['regencntr'] < client_stats[addr]['regens']:
+                        client_stats[addr]['regencntr'] += 1
                     else:
-                        client_info_mutable[addr]['regencntr'] = 0
-                        client_info_mutable[addr]['hlth'] += client_info_mutable[addr]['regenbonus']
+                        client_stats[addr]['regencntr'] = 0
+                        client_stats[addr]['hlth'] += client_stats[addr]['regenbonus']
                     
-                    if client_info_mutable[addr]['hlth'] > client_info_mutable[addr]['mhlth']:
-                        client_info_mutable[addr]['hlth'] = client_info_mutable[addr]['mhlth']
+                    if client_stats[addr]['hlth'] > client_stats[addr]['mhlth']:
+                        client_stats[addr]['hlth'] = client_stats[addr]['mhlth']
 
                 # Energy Regeneration NEEDS A LOCK
                 # with client_data_lock:
-                if client_updates[addr]['swim'] == True:
-                    if client_info_mutable[addr]['energyconsumptionratecntr'] >= client_info_mutable[addr]['energyconsumptionrate']:
-                        if client_info_mutable[addr]['energy'] <= 0:
-                            client_info_mutable[addr]['hlth'] -= client_info_mutable[addr]['mhlth'] // 8
-                            client_info_mutable[addr]['energy'] = 0
-                        client_info_mutable[addr]['energy'] -= client_info_mutable[addr]['energyconsumption']
-                        client_info_mutable[addr]['energyconsumptionratecntr'] = 0
+                if client_data[addr]['swim'] == True:
+                    if client_stats[addr]['energyconsumptionratecntr'] >= client_stats[addr]['energyconsumptionrate']:
+                        if client_stats[addr]['energy'] <= 0:
+                            client_stats[addr]['hlth'] -= client_stats[addr]['mhlth'] // 8
+                            client_stats[addr]['energy'] = 0
+                        client_stats[addr]['energy'] -= client_stats[addr]['energyconsumption']
+                        client_stats[addr]['energyconsumptionratecntr'] = 0
 
                     else:
-                        client_info_mutable[addr]['energyconsumptionratecntr'] += 1
+                        client_stats[addr]['energyconsumptionratecntr'] += 1
                 else:
-                    if client_info_mutable[addr]['energycntr'] >= client_info_mutable[addr]['energyregen']:
-                        if client_info_mutable[addr]['energy'] + client_info_mutable[addr]['energyregenbonus'] < client_info_mutable[addr]['maxenergy']:
-                            client_info_mutable[addr]['energy'] += client_info_mutable[addr]['energyregenbonus']
-                            client_info_mutable[addr]['energycntr'] = 0
+                    if client_stats[addr]['energycntr'] >= client_stats[addr]['energyregen']:
+                        if client_stats[addr]['energy'] + client_stats[addr]['energyregenbonus'] < client_stats[addr]['maxenergy']:
+                            client_stats[addr]['energy'] += client_stats[addr]['energyregenbonus']
+                            client_stats[addr]['energycntr'] = 0
                         else:
-                            client_info_mutable[addr]['energy'] = client_info_mutable[addr]['maxenergy']
-                            client_info_mutable[addr]['energycntr'] = 0
+                            client_stats[addr]['energy'] = client_stats[addr]['maxenergy']
+                            client_stats[addr]['energycntr'] = 0
                     else:
-                        client_info_mutable[addr]['energycntr'] += 1
+                        client_stats[addr]['energycntr'] += 1
 
-                if client_info_mutable[addr]['energy'] <= int(client_info_mutable[addr]['maxenergy'] / 6):
-                    client_info_mutable[addr]['hinderedspeedmult'] = client_info_mutable[addr]['lowenergyspeed']
+                if client_stats[addr]['energy'] <= int(client_stats[addr]['maxenergy'] / 6):
+                    client_stats[addr]['hinderedspeedmult'] = client_stats[addr]['lowenergyspeed']
                 else:
-                    client_info_mutable[addr]['hinderedspeedmult'] = 1
+                    client_stats[addr]['hinderedspeedmult'] = 1
 
-                # client_info[addr] = client
+                # client_stats[addr] = client
 
             # Update all clients
             # with client_data_lock:
                 # making a sendable copy of client data that doesn't have the socket connection
-            # client_info_sendable = dict(client_info_mutable)
-            # client_info = manager.dict(client_info_mutable)
-            client_info.update(client_info_mutable)
-            for addr, value in client_info_mutable.items():
-                client_info_mutable[addr].pop('conn', None)
-            for addr, stats in client_info.items():
+            # client_stats_sendable = dict(client_stats)
+            # client_stats = manager.dict(client_stats)
+            # client_stats_sendable = copy.deepcopy(client_stats)
+            # for addr, value in client_stats_sendable.items():
+            #     client_stats_sendable[addr].pop('conn', None)
+            for addr, con in client_con.items():
                 # sending 2 messages to all clients with both updates and info on other clients
-                send_message(client_info[addr]['conn'], [dict(client_updates)], False)
-                send_message(client_info[addr]['conn'], [client_info_mutable], False)
-                send_message(client_info[addr]['conn'], [npcs], False)
+                await send_message(client_con[addr], [client_data], False)
+                await send_message(client_con[addr], [client_stats], False)
+                await send_message(client_con[addr], [npcs], False)
 
             # Wait until the next tick
             elapsed = time.time() - start_time
             if elapsed < TICK_RATE:
-                time.sleep(TICK_RATE - elapsed)
+                await asyncio.sleep(TICK_RATE - elapsed)
             elif elapsed > TICK_RATE:
                 print("tickrate longer", elapsed)
-        except (TimeoutError, EOFError, KeyError, ConnectionResetError) as e:
+        except (TimeoutError, EOFError, KeyError) as e:
             print(f"Error processing data!", traceback.format_exc())
-            print(len(client_info), client_info.keys())
-        except (ConnectionAbortedError) as e:
-            del client_updates[addr]
-            del client_info[addr]
+            print(e)
+            # print(len(client_stats), client_stats.keys())
+        except (ConnectionAbortedError, ConnectionResetError) as e:
+            del client_data[addr]
+            del client_stats[addr]
+            del client_con[addr]
+        except Exception as e:
+            print(traceback.format_exc())
 
-def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info):
-    print(f"Connection with {addr[0]} on port {addr[1]} started...")
+async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, client_data, client_stats_lock, action_queue, client_stats, client_con):
+    # print(f"Connection with {addr[0]} on port {addr[1]} started...")
 
     """
     handle_client essentially is exactly what the name entails. It connects the client to the server. It keeps the server updated with client received 
     information. We take the client address and port and make it into an identifiable key for each client individually (WHICH MAY BE BAD PRACTICE?). In this 
     function we create 2 dictionaries, updates is for information coming from the client and info is information of the client from the server going to the 
-    client. The client sends login info so that the server can load in his/her player stats into the info dictionary. client_info and client_updates are both shared
+    client. The client sends login info so that the server can load in his/her player stats into the info dictionary. client_stats and client_data are both shared
     dictionaries between the handle_client and game_loop processes. We send both entire dicts to all clients so that they can see each others names and stats.
     Because the data inside a shared dictionary is immutable, we create a copy of a the dict of the player inside the shared dict, we update it, then we set it
     again (this seems to be the only way to edit specific values).
 
     """
 
-    conn.settimeout(5.0)
+    loop = asyncio.get_event_loop()
 
     # Client updates to server
     updates =  {
@@ -342,10 +352,6 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
                 'energyconsumptionrate' : 60,
                 'energyconsumptionratecntr' : 0,
                 'lowenergyspeed' : 0.5,
-
-                # 'inventory' : [],
-
-                'conn' : conn
             }
     
     """
@@ -353,19 +359,22 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
     """
     
     # Incoming Player Request
-    login = get_message(conn, False)
+    # login = get_message(conn, False)
+    login = await get_message(reader, False)
 
     # Opening all player accounts and storing them in a dictionary
-    with open("players.json", "r") as json_file:
-        player_data_loaded_from_storage = json.load(json_file)
+    async with aiofiles.open("players.json", mode='r') as json_file:
+        player_data = await json_file.read()
+        player_data_loaded_from_storage = json.loads(player_data)
 
     # Logging in to an Existing Player Account
     if login[2] == '0':
         login_accepted = False
 
+
         # Looping through all player accounts for matching username and password (also that they're not logged in already).
         for player in player_data_loaded_from_storage:
-            if player["username"] == login[0] and player["password"] == login[1] and login[0] not in client_info.keys():
+            if player["username"] == login[0] and player["password"] == login[1] and login[0] not in client_stats.keys():
                 # Creating a variable "username"
                 username = player["username"]
                 # Overriding the default info dict with the the saved info dict of the player
@@ -377,11 +386,11 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
         # Sending login successful message back for client
         if login_accepted:
             print("login successful: ", login[0])
-            send_message(conn, True, False)
+            await send_message(writer, True, False)
         # Sending login failure message back for client
         else:
             print("login failed", login[0])
-            send_message(conn, False, False)
+            await send_message(writer, False, False)
             return
     # Creating a New Player Account
     elif login[2] == '1':
@@ -394,7 +403,7 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
         # Sending login successful message back for client and set up
         if login_accepted:
             print("login successful: ", login[0])
-            send_message(conn, True, False)
+            await send_message(writer, True, False)
             # Creating username variable
             username = login[0]
             # Creating a spot for username to be saved within info evn though it already is saved in the json?
@@ -402,7 +411,7 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
         # Sending login failure message back for client
         else:
             print("login failed", login[0])
-            send_message(conn, False, False)
+            await send_message(writer, False, False)
             return
         
         # Creating a savable copy of the new player info
@@ -419,13 +428,14 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             json.dump(player_data_loaded_from_storage, f,indent=4)
     else:
         print("login failed", login[0])
-        send_message(conn, False, False)
+        await send_message(writer, False, False)
         return
 
     # setting up client
-    with client_data_lock:
-        client_updates[login[0]] = updates
-        client_info[login[0]] = info
+    # with client_data_lock:
+    client_data[login[0]] = updates
+    client_stats[login[0]] = info
+    client_con[login[0]] = writer
 
     """
     CLIENT LOOP
@@ -434,10 +444,10 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
     while True:
         try:
             # creating a mutable copy of client data
-            info = client_updates[username]
+            info = client_data[username]
 
             # get the message from the client
-            updates = get_message(conn, False)
+            updates = await get_message(reader, False)
             
             if updates in [0, None]:
                 break
@@ -452,12 +462,12 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
             info['animcntr'] = updates[0]['animcntr']
 
             # If an action is created by the client, add it to the queue
-            if updates[0]['action']['type'] != None and client_info[username]['hlth'] > 0:
+            if updates[0]['action']['type'] != None and client_stats[username]['hlth'] > 0:
                 updates[0]['action']['initiator'] = username
                 action_queue.put(updates[0]['action'])
 
-            # Finally, update the client_updates dict
-            client_updates[username] = info
+            # Finally, update the client_data dict
+            client_data[username] = info
 
         except (TimeoutError, KeyError, ConnectionResetError) as e:
             print(f"Error processing data from {username}: {traceback.format_exc()}")
@@ -470,62 +480,49 @@ def handle_client(conn, addr, client_updates, client_data_lock, action_queue, cl
     SAVE DATA AFTER CLIENT EXITING
     """
 
-    with open("players.json", "r") as json_file:
-        player_data_loaded_from_storage = json.load(json_file)
-
-        save_info = client_info[username].copy()
-        del save_info["conn"]
+    async with aiofiles.open("players.json", mode='r') as json_file:
+        player_data = await json_file.read()
+        player_data_loaded_from_storage = json.loads(player_data)
 
         for i in range(len(player_data_loaded_from_storage)):
             if player_data_loaded_from_storage[i]["username"] == username:
-                player_data_loaded_from_storage[i]["info"] = save_info
+                player_data_loaded_from_storage[i]["info"] = client_stats[username]
 
-    with open("players.json", "w") as f:
+
+    async with aiofiles.open("players.json", mode='r') as json_file:
         json.dump(player_data_loaded_from_storage, f,indent=4)
 
     # Removing client from active dictionaries
-    with client_data_lock:
-        del client_updates[username]
-        del client_info[username]
+    # with client_data_lock:
+    del client_data[username]
+    del client_stats[username]
+    del client_con[username]
 
-    print(f"Connection with {addr[0]} on port {addr[1]} finished...")
+    # print(f"Connection with {addr[0]} on port {addr[1]} finished...")
 
-def start_server():
+async def start_server():
+    from queue import Queue
     client_stats_lock = multiprocessing.Lock()
     manager = multiprocessing.Manager()
 
-    client_data = manager.dict()
-    client_stats = manager.dict()
-    action_queue = manager.Queue()
-    
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT))
-        s.listen()
-        print(f"Server listening on {HOST}:{PORT}")
+    client_data = dict()
+    client_stats = dict()
+    client_con = dict()
+    action_queue = Queue()
 
-        # multiprocessing.Process(target=get_status, args=(client_data,client_stats_backup)).start()
-        multiprocessing.Process(target=game_loop, args=(client_data, action_queue, client_stats)).start()
+    gameloop = asyncio.create_task(game_loop(client_data,action_queue,client_stats,client_con))
 
-        while True:
-            try:
-                conn, addr = s.accept()
-                multiprocessing.Process(
-                    target=handle_client, 
-                    args=(conn, addr, client_data, client_stats_lock, action_queue, client_stats)
-                    ).start()
-                
-                if len(client_data) > MAX_PLAYERS:
-                    login = get_message(conn, False)
-                    # Sending login failure message back for client
-                    print("PLAYER LIMIT: Rejected", login[0])
-                    send_message(conn, False, False)
+    server = await asyncio.start_server(
+        lambda r, w: handle_client(r, w, client_data, client_stats_lock, action_queue, client_stats, client_con),
+        HOST,
+        PORT
+    )
 
-            except KeyboardInterrupt:
-                print("Server shutting down...")
-                break
-            except Exception as e:
-                print(f"Server error: {e}")
+    print(f"Server listening on {HOST}:{PORT}")
+
+    async with server:
+        await server.serve_forever()
 
 if __name__ == "__main__":
     print('Server Starting...')
-    start_server()
+    asyncio.run(start_server())
