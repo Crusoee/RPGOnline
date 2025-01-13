@@ -2,7 +2,8 @@ import zlib
 import pickle
 import socket
 
-host = '192.168.0.4'
+host = '127.0.0.1'
+# host = '192.168.0.4'
 # host = '10.0.0.128'
 port = 65432
 

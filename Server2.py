@@ -5,7 +5,7 @@ import zlib
 import time
 import datetime
 import random
-import math
+import asyncio
 import traceback
 import json
 
@@ -16,7 +16,7 @@ from SimplexNoise import simplex_noise
 HOST = "0.0.0.0"
 PORT = 65432
 TICK_RATE = 1 / 20 # 60 Hz
-MAX_PLAYERS = 8
+MAX_PLAYERS = 80
 
 def send_message(conn, data, use_compression=True):
     # Serialize data
@@ -68,7 +68,7 @@ def match_dict(dictionary1, dictionary2_set):
                 dict_copy[key1] = item1
     return dict_copy
 
-def game_loop(client_updates, client_data_lock, action_queue, client_info,client_stats_backup):
+def game_loop(client_updates, action_queue, client_info):
     """
     NPCs
     TESTING PHASE:
@@ -89,6 +89,8 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
             This is to keep the server running at a constant speed.
             """
             start_time = time.time()
+
+            client_info_mutable = dict(client_info)
             
 
             """
@@ -100,70 +102,70 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                 # Get the next action on the queue
                 action = action_queue.get()
                 # Keep tabs on who initiated the action
-                initiator = client_info[action['initiator']]
+                # initiator = client_info_mutable[action['initiator']]
 
                 """
                 If a player attacks another player
                 """
 
-                if action['type'] == 'attack' and initiator['atc'] >= initiator['ats'] and action['target'] in client_info.keys():
+                if action['type'] == 'attack' and client_info_mutable[action['initiator']]['atc'] >= client_info_mutable[action['initiator']]['ats'] and action['target'] in client_info.keys():
                     # with client_data_lock:
-                    target = client_info[action['target']]
+                    # target = client_info[action['target']]
 
-                    if initiator['energy'] - initiator['energyconsumption'] < 0:
+                    if client_info_mutable[action['initiator']]['energy'] - client_info_mutable[action['initiator']]['energyconsumption'] < 0:
                         continue
 
-                    initiator['energy'] -= initiator['energyconsumption']
+                    client_info_mutable[action['initiator']]['energy'] -= client_info_mutable[action['initiator']]['energyconsumption']
 
                     # Damage Calculation and Crit
                     # How much true damage initiator did to target
-                    true_damage = round(initiator['dmg'] * (initiator['crit'] if random.randint(1, initiator['chance']) == 1 else 1), 2)
+                    true_damage = round(client_info_mutable[action['initiator']]['dmg'] * (client_info_mutable[action['initiator']]['crit'] if random.randint(1, client_info_mutable[action['initiator']]['chance']) == 1 else 1), 2)
                     # How much damage initiator did to target after armor calculation
-                    damage = round(true_damage - true_damage * target['arm'] / true_damage, 2)
+                    damage = round(true_damage - true_damage * client_info_mutable[action['target']]['arm'] / true_damage, 2)
                     # How much reversal damage target did to initiator
-                    thorns = round(damage * target['thorns'], 2)
+                    thorns = round(damage * client_info_mutable[action['target']]['thorns'], 2)
                     # How much life steal initiator gets from damage
-                    lifesteal = round(damage * initiator['lifesteal'], 2)
+                    lifesteal = round(damage * client_info_mutable[action['initiator']]['lifesteal'], 2)
                     # How much life steal target gets from reversal damage
-                    target_lifesteal = round(thorns * target['lifesteal'], 2)
+                    target_lifesteal = round(thorns * client_info_mutable[action['target']]['lifesteal'], 2)
 
-                    target['hlth'] -= damage
-                    target['hlth'] += target_lifesteal
-                    initiator['hlth'] -= thorns
-                    initiator['hlth'] += lifesteal
+                    client_info_mutable[action['target']]['hlth'] -= damage
+                    client_info_mutable[action['target']]['hlth'] += target_lifesteal
+                    client_info_mutable[action['initiator']]['hlth'] -= thorns
+                    client_info_mutable[action['initiator']]['hlth'] += lifesteal
 
-                    if target['hlth'] > target['mhlth']:
-                        target['hlth'] = target['mhlth']
+                    if client_info_mutable[action['target']]['hlth'] > client_info_mutable[action['target']]['mhlth']:
+                        client_info_mutable[action['target']]['hlth'] = client_info_mutable[action['target']]['mhlth']
 
-                    if initiator['hlth'] > initiator['mhlth']:
-                        initiator['hlth'] = initiator['mhlth']
+                    if client_info_mutable[action['initiator']]['hlth'] > client_info_mutable[action['initiator']]['mhlth']:
+                        client_info_mutable[action['initiator']]['hlth'] = client_info_mutable[action['initiator']]['mhlth']
 
                     # Reset attack Counter
-                    initiator['atc'] = 0
+                    client_info_mutable[action['initiator']]['atc'] = 0
 
                     # Add 1 to a players kill count
-                    if target['hlth'] <= 0:
-                        initiator['killcount'] += 1
+                    if client_info_mutable[action['target']]['hlth'] <= 0:
+                        client_info_mutable[action['initiator']]['killcount'] += 1
 
                     # Reset the target
                     # with client_data_lock:
-                    client_info[action['target']] = target
+                    # client_info[action['target']] = target
 
                 """
                 If a player attacks an NPC
                 """
-                if action['type'] == 'attacknpc' and initiator['atc'] >= initiator['ats'] and action['target'] in npcs.keys():
-                    npcs[action['target']].health -= initiator['dmg']
+                if action['type'] == 'attacknpc' and client_info_mutable[action['initiator']]['atc'] >= client_info_mutable[action['initiator']]['ats'] and action['target'] in npcs.keys():
+                    npcs[action['target']].health -= client_info_mutable[action['initiator']]['dmg']
                     # Reset attack Counter
-                    initiator['atc'] = 0
+                    client_info_mutable[action['initiator']]['atc'] = 0
 
                     # If an npcs health is less than 0
                     if npcs[action['target']].health < 0:
-                        initiator['dmg'] += 0.01
-                        if initiator['hlth'] + 5.0 < initiator['mhlth']:
-                            initiator['hlth'] += 5.0
+                        client_info_mutable[action['initiator']]['dmg'] += 0.01
+                        if client_info_mutable[action['initiator']]['hlth'] + 5.0 < client_info_mutable[action['initiator']]['mhlth']:
+                            client_info_mutable[action['initiator']]['hlth'] += 5.0
                         else:
-                            initiator['hlth'] = initiator['mhlth']
+                            client_info_mutable[action['initiator']]['hlth'] = client_info_mutable[action['initiator']]['mhlth']
 
                         npcs.pop(action['target'], None)
 
@@ -171,77 +173,79 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                     ...
 
                 # with client_data_lock:
-                client_info[action['initiator']] = initiator
+                # client_info[action['initiator']] = initiator
 
             """
             TICK UPDATES
             """
             for addr, stats in client_info.items():
 
-                client = client_info[addr]
+                # client = client_info[addr]
 
                 # Melee Attacking
-                if client['atc'] * client['hinderedspeedmult'] < client['ats']:
-                    client['atc'] += 1
+                if client_info_mutable[addr]['atc'] * client_info_mutable[addr]['hinderedspeedmult'] < client_info_mutable[addr]['ats']:
+                    client_info_mutable[addr]['atc'] += 1
 
                 # Respawning
-                if client['hlth'] <= 0:
-                    client['rescntr'] += 1
-                    if client['rescntr'] >= client['ress']:
-                        client['hlth'] = client['mhlth']
-                        client['rescntr'] = 0
+                if client_info_mutable[addr]['hlth'] <= 0:
+                    client_info_mutable[addr]['rescntr'] += 1
+                    if client_info_mutable[addr]['rescntr'] >= client_info_mutable[addr]['ress']:
+                        client_info_mutable[addr]['hlth'] = client_info_mutable[addr]['mhlth']
+                        client_info_mutable[addr]['rescntr'] = 0
 
                 # Health Regeneration
-                if client['hlth'] < client['mhlth']:
-                    if client['regencntr'] < client['regens']:
-                        client['regencntr'] += 1
+                if client_info_mutable[addr]['hlth'] < client_info_mutable[addr]['mhlth']:
+                    if client_info_mutable[addr]['regencntr'] < client_info_mutable[addr]['regens']:
+                        client_info_mutable[addr]['regencntr'] += 1
                     else:
-                        client['regencntr'] = 0
-                        client['hlth'] += client['regenbonus']
+                        client_info_mutable[addr]['regencntr'] = 0
+                        client_info_mutable[addr]['hlth'] += client_info_mutable[addr]['regenbonus']
                     
-                    if client['hlth'] > client['mhlth']:
-                        client['hlth'] = client['mhlth']
+                    if client_info_mutable[addr]['hlth'] > client_info_mutable[addr]['mhlth']:
+                        client_info_mutable[addr]['hlth'] = client_info_mutable[addr]['mhlth']
 
                 # Energy Regeneration NEEDS A LOCK
                 # with client_data_lock:
                 if client_updates[addr]['swim'] == True:
-                    if client['energyconsumptionratecntr'] >= client['energyconsumptionrate']:
-                        if client['energy'] <= 0:
-                            client['hlth'] -= client['mhlth'] // 8
-                            client['energy'] = 0
-                        client['energy'] -= client['energyconsumption']
-                        client['energyconsumptionratecntr'] = 0
+                    if client_info_mutable[addr]['energyconsumptionratecntr'] >= client_info_mutable[addr]['energyconsumptionrate']:
+                        if client_info_mutable[addr]['energy'] <= 0:
+                            client_info_mutable[addr]['hlth'] -= client_info_mutable[addr]['mhlth'] // 8
+                            client_info_mutable[addr]['energy'] = 0
+                        client_info_mutable[addr]['energy'] -= client_info_mutable[addr]['energyconsumption']
+                        client_info_mutable[addr]['energyconsumptionratecntr'] = 0
 
                     else:
-                        client['energyconsumptionratecntr'] += 1
+                        client_info_mutable[addr]['energyconsumptionratecntr'] += 1
                 else:
-                    if client['energycntr'] >= client['energyregen']:
-                        if client['energy'] + client['energyregenbonus'] < client['maxenergy']:
-                            client['energy'] += client['energyregenbonus']
-                            client['energycntr'] = 0
+                    if client_info_mutable[addr]['energycntr'] >= client_info_mutable[addr]['energyregen']:
+                        if client_info_mutable[addr]['energy'] + client_info_mutable[addr]['energyregenbonus'] < client_info_mutable[addr]['maxenergy']:
+                            client_info_mutable[addr]['energy'] += client_info_mutable[addr]['energyregenbonus']
+                            client_info_mutable[addr]['energycntr'] = 0
                         else:
-                            client['energy'] = client['maxenergy']
-                            client['energycntr'] = 0
+                            client_info_mutable[addr]['energy'] = client_info_mutable[addr]['maxenergy']
+                            client_info_mutable[addr]['energycntr'] = 0
                     else:
-                        client['energycntr'] += 1
+                        client_info_mutable[addr]['energycntr'] += 1
 
-                if client['energy'] <= int(client['maxenergy'] / 6):
-                    client['hinderedspeedmult'] = client['lowenergyspeed']
+                if client_info_mutable[addr]['energy'] <= int(client_info_mutable[addr]['maxenergy'] / 6):
+                    client_info_mutable[addr]['hinderedspeedmult'] = client_info_mutable[addr]['lowenergyspeed']
                 else:
-                    client['hinderedspeedmult'] = 1
+                    client_info_mutable[addr]['hinderedspeedmult'] = 1
 
-                client_info[addr] = client
+                # client_info[addr] = client
 
             # Update all clients
             # with client_data_lock:
                 # making a sendable copy of client data that doesn't have the socket connection
-            client_info_sendable = dict(client_info)
-            for addr, value in client_info_sendable.items():
-                client_info_sendable[addr].pop('conn', None)
-            for addr, stats in client_info_sendable.items():
+            # client_info_sendable = dict(client_info_mutable)
+            # client_info = manager.dict(client_info_mutable)
+            client_info.update(client_info_mutable)
+            for addr, value in client_info_mutable.items():
+                client_info_mutable[addr].pop('conn', None)
+            for addr, stats in client_info.items():
                 # sending 2 messages to all clients with both updates and info on other clients
                 send_message(client_info[addr]['conn'], [dict(client_updates)], False)
-                send_message(client_info[addr]['conn'], [client_info_sendable], False)
+                send_message(client_info[addr]['conn'], [client_info_mutable], False)
                 send_message(client_info[addr]['conn'], [npcs], False)
 
             # Wait until the next tick
@@ -492,7 +496,6 @@ def start_server():
 
     client_data = manager.dict()
     client_stats = manager.dict()
-    client_stats_backup = [manager.dict()]
     action_queue = manager.Queue()
     
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -501,7 +504,7 @@ def start_server():
         print(f"Server listening on {HOST}:{PORT}")
 
         # multiprocessing.Process(target=get_status, args=(client_data,client_stats_backup)).start()
-        multiprocessing.Process(target=game_loop, args=(client_data, client_stats_lock, action_queue, client_stats,client_stats_backup)).start()
+        multiprocessing.Process(target=game_loop, args=(client_data, action_queue, client_stats)).start()
 
         while True:
             try:
