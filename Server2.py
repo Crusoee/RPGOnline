@@ -74,6 +74,31 @@ def match_dict(dictionary1, dictionary2_set):
                 dict_copy[key1] = item1
     return dict_copy
 
+async def append(file_name, new_data):
+        # Appending it to the current list of players
+        try:
+            # Read the existing data
+            async with aiofiles.open(file_name, mode='r') as json_file:
+                try:
+                    data = json.loads(await json_file.read())
+                except json.JSONDecodeError:
+                    # File might be empty or invalid JSON, start with empty data
+                    data = []
+
+            # Append the new data
+            if isinstance(data, list):  # Ensure we're working with a list
+                data.append(new_data)
+            else:
+                raise ValueError("JSON data is not a list, appending is not possible.")
+
+            # Write the updated data back to the file
+            async with aiofiles.open(file_name, mode='w') as json_file:
+                await json_file.write(json.dumps(data, indent=4))
+        except FileNotFoundError:
+            # If the file does not exist, create it with the new data as the first entry
+            async with aiofiles.open(file_name, mode='w') as json_file:
+                await json_file.write(json.dumps([new_data], indent=4))
+
 async def game_loop(client_data, action_queue, client_stats, client_con):
     """
     NPCs
@@ -241,15 +266,8 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
                 # client_stats[addr] = client
 
             # Update all clients
-            # with client_data_lock:
-                # making a sendable copy of client data that doesn't have the socket connection
-            # client_stats_sendable = dict(client_stats)
-            # client_stats = manager.dict(client_stats)
-            # client_stats_sendable = copy.deepcopy(client_stats)
-            # for addr, value in client_stats_sendable.items():
-            #     client_stats_sendable[addr].pop('conn', None)
             for addr, con in client_con.items():
-                # sending 2 messages to all clients with both updates and info on other clients
+                # sending 3 messages to all clients with both updates and info on other clients
                 await send_message(client_con[addr], [client_data], False)
                 await send_message(client_con[addr], [client_stats], False)
                 await send_message(client_con[addr], [npcs], False)
@@ -414,18 +432,39 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
             await send_message(writer, False, False)
             return
         
-        # Creating a savable copy of the new player info
-        save_info = info.copy()
-        # Deleting the connection key and value because it is unpicklable
-        del save_info['conn']
+        # # Creating a savable copy of the new player info
+        # save_info = info.copy()
+        # # Deleting the connection key and value because it is unpicklable
+        # del save_info['conn']
 
         # Organizing a dict
-        new_player = {"username" : login[0], "password" : login[1],"info" : save_info}
+        new_player = {"username" : login[0], "password" : login[1],"info" : info}
+
         # Appending it to the current list of players
-        player_data_loaded_from_storage.append(new_player)
-        # Saving it back to the file
-        with open("players.json", "w") as f:
-            json.dump(player_data_loaded_from_storage, f,indent=4)
+        await append("players.json",new_player)
+        # try:
+        #     # Read the existing data
+        #     async with aiofiles.open("players.json", mode='r') as json_file:
+        #         try:
+        #             data = json.loads(await json_file.read())
+        #         except json.JSONDecodeError:
+        #             # File might be empty or invalid JSON, start with empty data
+        #             data = []
+
+        #     # Append the new data
+        #     if isinstance(data, list):  # Ensure we're working with a list
+        #         data.append(new_player)
+        #     else:
+        #         raise ValueError("JSON data is not a list, appending is not possible.")
+
+        #     # Write the updated data back to the file
+        #     async with aiofiles.open("players.json", mode='w') as json_file:
+        #         await json_file.write(json.dumps(data, indent=4))
+        # except FileNotFoundError:
+        #     # If the file does not exist, create it with the new data as the first entry
+        #     async with aiofiles.open("players.json", mode='w') as json_file:
+        #         await json_file.write(json.dumps([new_player], indent=4))
+
     else:
         print("login failed", login[0])
         await send_message(writer, False, False)
@@ -489,8 +528,9 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 player_data_loaded_from_storage[i]["info"] = client_stats[username]
 
 
-    async with aiofiles.open("players.json", mode='r') as json_file:
-        json.dump(player_data_loaded_from_storage, f,indent=4)
+    async with aiofiles.open("players.json", mode='w') as json_file:
+        # Serialize the data and write to the file
+        await json_file.write(json.dumps(player_data_loaded_from_storage, indent=4))
 
     # Removing client from active dictionaries
     # with client_data_lock:
