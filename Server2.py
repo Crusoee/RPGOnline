@@ -15,7 +15,8 @@ from SimplexNoise import simplex_noise
 # Constants
 HOST = "0.0.0.0"
 PORT = 65432
-TICK_RATE = 1 / 60 # 60 Hz
+TICK_RATE = 1 / 20 # 60 Hz
+MAX_PLAYERS = 8
 
 def send_message(conn, data, use_compression=True):
     # Serialize data
@@ -106,8 +107,8 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                 """
 
                 if action['type'] == 'attack' and initiator['atc'] >= initiator['ats'] and action['target'] in client_info.keys():
-                    with client_data_lock:
-                        target = client_info[action['target']]
+                    # with client_data_lock:
+                    target = client_info[action['target']]
 
                     if initiator['energy'] - initiator['energyconsumption'] < 0:
                         continue
@@ -145,8 +146,8 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                         initiator['killcount'] += 1
 
                     # Reset the target
-                    with client_data_lock:
-                        client_info[action['target']] = target
+                    # with client_data_lock:
+                    client_info[action['target']] = target
 
                 """
                 If a player attacks an NPC
@@ -169,8 +170,8 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                 if action['type'] == 'loot':
                     ...
 
-                with client_data_lock:
-                    client_info[action['initiator']] = initiator
+                # with client_data_lock:
+                client_info[action['initiator']] = initiator
 
             """
             TICK UPDATES
@@ -202,27 +203,27 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                         client['hlth'] = client['mhlth']
 
                 # Energy Regeneration NEEDS A LOCK
-                with client_data_lock:
-                    if client_updates[addr]['swim'] == True:
-                        if client['energyconsumptionratecntr'] >= client['energyconsumptionrate']:
-                            if client['energy'] <= 0:
-                                client['hlth'] -= client['mhlth'] // 8
-                                client['energy'] = 0
-                            client['energy'] -= client['energyconsumption']
-                            client['energyconsumptionratecntr'] = 0
+                # with client_data_lock:
+                if client_updates[addr]['swim'] == True:
+                    if client['energyconsumptionratecntr'] >= client['energyconsumptionrate']:
+                        if client['energy'] <= 0:
+                            client['hlth'] -= client['mhlth'] // 8
+                            client['energy'] = 0
+                        client['energy'] -= client['energyconsumption']
+                        client['energyconsumptionratecntr'] = 0
 
-                        else:
-                            client['energyconsumptionratecntr'] += 1
                     else:
-                        if client['energycntr'] >= client['energyregen']:
-                            if client['energy'] + client['energyregenbonus'] < client['maxenergy']:
-                                client['energy'] += client['energyregenbonus']
-                                client['energycntr'] = 0
-                            else:
-                                client['energy'] = client['maxenergy']
-                                client['energycntr'] = 0
+                        client['energyconsumptionratecntr'] += 1
+                else:
+                    if client['energycntr'] >= client['energyregen']:
+                        if client['energy'] + client['energyregenbonus'] < client['maxenergy']:
+                            client['energy'] += client['energyregenbonus']
+                            client['energycntr'] = 0
                         else:
-                            client['energycntr'] += 1
+                            client['energy'] = client['maxenergy']
+                            client['energycntr'] = 0
+                    else:
+                        client['energycntr'] += 1
 
                 if client['energy'] <= int(client['maxenergy'] / 6):
                     client['hinderedspeedmult'] = client['lowenergyspeed']
@@ -232,29 +233,29 @@ def game_loop(client_updates, client_data_lock, action_queue, client_info,client
                 client_info[addr] = client
 
             # Update all clients
-            with client_data_lock:
+            # with client_data_lock:
                 # making a sendable copy of client data that doesn't have the socket connection
-                client_info_sendable = dict(client_info)
-                for addr, value in client_info_sendable.items():
-                    client_info_sendable[addr].pop('conn', None)
-                for addr, stats in client_info_sendable.items():
-                    # sending 2 messages to all clients with both updates and info on other clients
-                    send_message(client_info[addr]['conn'], [dict(client_updates)], False)
-                    send_message(client_info[addr]['conn'], [client_info_sendable], False)
-                    send_message(client_info[addr]['conn'], [npcs], False)
+            client_info_sendable = dict(client_info)
+            for addr, value in client_info_sendable.items():
+                client_info_sendable[addr].pop('conn', None)
+            for addr, stats in client_info_sendable.items():
+                # sending 2 messages to all clients with both updates and info on other clients
+                send_message(client_info[addr]['conn'], [dict(client_updates)], False)
+                send_message(client_info[addr]['conn'], [client_info_sendable], False)
+                send_message(client_info[addr]['conn'], [npcs], False)
 
             # Wait until the next tick
             elapsed = time.time() - start_time
             if elapsed < TICK_RATE:
                 time.sleep(TICK_RATE - elapsed)
+            elif elapsed > TICK_RATE:
+                print("tickrate longer", elapsed)
         except (TimeoutError, EOFError, KeyError, ConnectionResetError) as e:
             print(f"Error processing data!", traceback.format_exc())
             print(len(client_info), client_info.keys())
         except (ConnectionAbortedError) as e:
             del client_updates[addr]
             del client_info[addr]
-
-
 
 def handle_client(conn, addr, client_updates, client_data_lock, action_queue, client_info):
     print(f"Connection with {addr[0]} on port {addr[1]} started...")
@@ -499,7 +500,7 @@ def start_server():
         s.listen()
         print(f"Server listening on {HOST}:{PORT}")
 
-        multiprocessing.Process(target=get_status, args=(client_data,client_stats_backup)).start()
+        # multiprocessing.Process(target=get_status, args=(client_data,client_stats_backup)).start()
         multiprocessing.Process(target=game_loop, args=(client_data, client_stats_lock, action_queue, client_stats,client_stats_backup)).start()
 
         while True:
@@ -509,6 +510,13 @@ def start_server():
                     target=handle_client, 
                     args=(conn, addr, client_data, client_stats_lock, action_queue, client_stats)
                     ).start()
+                
+                if len(client_data) > MAX_PLAYERS:
+                    login = get_message(conn, False)
+                    # Sending login failure message back for client
+                    print("PLAYER LIMIT: Rejected", login[0])
+                    send_message(conn, False, False)
+
             except KeyboardInterrupt:
                 print("Server shutting down...")
                 break
