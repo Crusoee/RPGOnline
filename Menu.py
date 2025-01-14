@@ -41,6 +41,9 @@ class Menu:
 
     stats = False
     stats_scroll = 0.0
+
+    # location = False
+
     inventory = False
 
 
@@ -50,6 +53,7 @@ class Menu:
         self.screen_width = screen_width
         self.menu_textures = menu_textures
         self.stats_button = OnOffButton(rl.Rectangle(0,0,250,80), menu_textures["parchment"])
+        self.location_button = OnOffButton(rl.Rectangle(screen_width - menu_textures['parchment'].width,0,250,80), menu_textures["parchment"])
         self.buttons.append(self.stats_button)
         
         
@@ -77,6 +81,19 @@ class Menu:
                                 rl.Rectangle(0,0,250,80), 
                                 rl.Vector2(0,0), 0.0, rl.WHITE) 
             rl.draw_text_ex(self.menu_textures["written_font"], "...", rl.Vector2(50, 20), 40, 0.0, rl.BLACK)
+
+
+        if self.location_button.is_on:
+            rl.draw_texture_pro(self.menu_textures["parchment"], 
+                                rl.Rectangle(0,0,self.menu_textures["parchment"].width,self.menu_textures["parchment"].height), 
+                                rl.Rectangle(self.screen_width - self.menu_textures["parchment"].width,0,250,600), 
+                                rl.Vector2(0,0), 0.0, rl.WHITE)    
+        else:
+            rl.draw_texture_pro(self.menu_textures["parchment"], 
+                                rl.Rectangle(0,0,self.menu_textures["parchment"].width,140), 
+                                rl.Rectangle(self.screen_width - self.menu_textures["parchment"].width,0,250,80), 
+                                rl.Vector2(0,0), 0.0, rl.WHITE) 
+            rl.draw_text_ex(self.menu_textures["written_font"], "...", rl.Vector2(self.screen_width - self.menu_textures["parchment"].width - 50, 20), 40, 0.0, rl.BLACK)
 
         # if rl.gui_button(rl.Rectangle(0,30,70,20), "Stats"):
         #     if self.stats:

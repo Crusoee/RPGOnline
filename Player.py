@@ -41,10 +41,10 @@ class Player():
                 'crit' : 1.1,
                 'chance' : 50,
 
-                'mgcdamage' : 0,
+                'mgcdamage' : 18,
                 'maxmgc' : 500,
                 'mgc' : 500,
-                'mgcregen' : 120,
+                'mgcregen' : 90,
                 'mgcregenbonus' : 1,
                 'mgcctnr' : 0,
                 'mgcheal' : 5,
@@ -55,36 +55,36 @@ class Player():
 
                 'hlth' : 100,
                 'mhlth' : 100,
-                'regens' : 120,
+                'regens' : 60,
                 'regencntr' : 0,
                 'regenbonus' : 1,
 
                 # 'hit' : '',
 
-                'atc' : 60,
-                'ats' : 60,
+                'atc' : 30,
+                'ats' : 30,
 
-                'ress' : 600,
+                'ress' : 300,
                 'rescntr' : 0,
 
                 'hinderedspeedmult' : 1,
 
-                'speed' : 200,
-                'swmspeed' : 100,
+                'speed' : 130,
+                'swmspeed' : 65,
 
                 'killcount' : 0,
 
                 'attackingdist' : 50,
-                'trackingdist' : 1000,
+                'trackingdist' : 800,
 
-                'maxenergy' : 300,
-                'energy' : 300,
+                'maxenergy' : 100,
+                'energy' : 100,
                 'energyregen' : 120,
                 'energycntr' : 0,
                 'energyregenbonus' : 10,
 
                 'energyconsumption' : 20,
-                'energyconsumptionrate' : 60,
+                'energyconsumptionrate' : 30,
                 'energyconsumptionratecntr' : 0,
                 'lowenergyspeed' : 0.5,
             }

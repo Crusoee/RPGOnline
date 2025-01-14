@@ -18,7 +18,7 @@ from SimplexNoise import simplex_noise
 # Constants
 HOST = "0.0.0.0"
 PORT = 65432
-TICK_RATE = 1 / 20 # 60 Hz
+TICK_RATE = 1 / 30 # 60 Hz
 MAX_PLAYERS = 80
 
 async def send_message(writer: asyncio.StreamWriter, data, use_compression=True):
@@ -121,9 +121,6 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
             """
             start_time = time.time()
 
-            # client_stats = dict(client_stats)
-            
-
             """
             This is the while loop to handle all actions created by the players.
             This while loop continues until all player actions have been handled. while not action_queue.empty()...
@@ -133,15 +130,12 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
                 # Get the next action on the queue
                 action = action_queue.get()
                 # Keep tabs on who initiated the action
-                # initiator = client_stats[action['initiator']]
 
                 """
                 If a player attacks another player
                 """
 
                 if action['type'] == 'attack' and client_stats[action['initiator']]['atc'] >= client_stats[action['initiator']]['ats'] and action['target'] in client_stats.keys():
-                    # with client_data_lock:
-                    # target = client_stats[action['target']]
 
                     if client_stats[action['initiator']]['energy'] - client_stats[action['initiator']]['energyconsumption'] < 0:
                         continue
@@ -178,10 +172,6 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
                     if client_stats[action['target']]['hlth'] <= 0:
                         client_stats[action['initiator']]['killcount'] += 1
 
-                    # Reset the target
-                    # with client_data_lock:
-                    # client_stats[action['target']] = target
-
                 """
                 If a player attacks an NPC
                 """
@@ -203,15 +193,10 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
                 if action['type'] == 'loot':
                     ...
 
-                # with client_data_lock:
-                # client_stats[action['initiator']] = initiator
-
             """
             TICK UPDATES
             """
             for addr, stats in client_stats.items():
-
-                # client = client_stats[addr]
 
                 # Melee Attacking
                 if client_stats[addr]['atc'] * client_stats[addr]['hinderedspeedmult'] < client_stats[addr]['ats']:
@@ -327,7 +312,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 'mgcdamage' : 18,
                 'maxmgc' : 500,
                 'mgc' : 500,
-                'mgcregen' : 120,
+                'mgcregen' : 90,
                 'mgcregenbonus' : 1,
                 'mgcctnr' : 0,
                 'mgcheal' : 5,
@@ -338,16 +323,14 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
                 'hlth' : 100,
                 'mhlth' : 100,
-                'regens' : 120,
+                'regens' : 60,
                 'regencntr' : 0,
                 'regenbonus' : 1,
 
-                # 'hit' : '',
+                'atc' : 30,
+                'ats' : 30,
 
-                'atc' : 60,
-                'ats' : 60,
-
-                'ress' : 600,
+                'ress' : 300,
                 'rescntr' : 0,
 
                 'hinderedspeedmult' : 1,
@@ -360,14 +343,14 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 'attackingdist' : 50,
                 'trackingdist' : 800,
 
-                'maxenergy' : 300,
-                'energy' : 300,
+                'maxenergy' : 100,
+                'energy' : 100,
                 'energyregen' : 120,
                 'energycntr' : 0,
                 'energyregenbonus' : 10,
 
                 'energyconsumption' : 20,
-                'energyconsumptionrate' : 60,
+                'energyconsumptionrate' : 30,
                 'energyconsumptionratecntr' : 0,
                 'lowenergyspeed' : 0.5,
             }
@@ -388,7 +371,6 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     # Logging in to an Existing Player Account
     if login[2] == '0':
         login_accepted = False
-
 
         # Looping through all player accounts for matching username and password (also that they're not logged in already).
         for player in player_data_loaded_from_storage:
@@ -431,39 +413,12 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
             print("login failed", login[0])
             await send_message(writer, False, False)
             return
-        
-        # # Creating a savable copy of the new player info
-        # save_info = info.copy()
-        # # Deleting the connection key and value because it is unpicklable
-        # del save_info['conn']
 
         # Organizing a dict
         new_player = {"username" : login[0], "password" : login[1],"info" : info}
 
         # Appending it to the current list of players
         await append("players.json",new_player)
-        # try:
-        #     # Read the existing data
-        #     async with aiofiles.open("players.json", mode='r') as json_file:
-        #         try:
-        #             data = json.loads(await json_file.read())
-        #         except json.JSONDecodeError:
-        #             # File might be empty or invalid JSON, start with empty data
-        #             data = []
-
-        #     # Append the new data
-        #     if isinstance(data, list):  # Ensure we're working with a list
-        #         data.append(new_player)
-        #     else:
-        #         raise ValueError("JSON data is not a list, appending is not possible.")
-
-        #     # Write the updated data back to the file
-        #     async with aiofiles.open("players.json", mode='w') as json_file:
-        #         await json_file.write(json.dumps(data, indent=4))
-        # except FileNotFoundError:
-        #     # If the file does not exist, create it with the new data as the first entry
-        #     async with aiofiles.open("players.json", mode='w') as json_file:
-        #         await json_file.write(json.dumps([new_player], indent=4))
 
     else:
         print("login failed", login[0])
