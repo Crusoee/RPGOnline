@@ -2,7 +2,7 @@ import zlib
 import pickle
 import socket
 
-host = '192.168.0.4'
+host = '192.168.56.1'
 # host = '192.168.0.4'
 # host = '10.0.0.128'
 port = 65432
@@ -48,7 +48,6 @@ def client_communication_loop(shared_memory, login):
     s = socket.socket()
     s.connect((host, port))
     print("Connected to the server")
-
 
     send_message(s, login, False)
     shared_memory["login_successful"] = get_message(s, False)

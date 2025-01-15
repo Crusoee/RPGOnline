@@ -26,10 +26,6 @@ def game_loop(player, shared_memory):
 
     render_texture = rl.load_render_texture(SCREEN_WIDTH, SCREEN_HEIGHT)
 
-    player_shaders = {
-        "invert_text" : rl.load_shader("", "invert_text.fs")
-    }
-
     cursorTexture = rl.load_texture("Mouse\dwarven_gauntlet.png")
 
     tiles = {'water_tile' : rl.load_texture("topdown_tiles\\tiles\\deep0\\straight\\0\\0.png"),
@@ -81,7 +77,7 @@ def game_loop(player, shared_memory):
         Render.draw_players(shared_memory, player_textures)
 
 
-        player.draw(player_textures, player_shaders)
+        player.draw(player_textures)
 
         # for jim in chunk_data[int(player.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(player.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1]:
         #     raylib.DrawRectangleRec(jim, rl.GREEN)
@@ -135,9 +131,6 @@ def game_loop(player, shared_memory):
                                'action' : player.action}
 
     shared_memory['running'] = False
-
-    rl.unload_shader(player_shaders['invert_text'])
-    rl.unload_render_texture(render_texture)
 
     raylib.CloseWindow()
 

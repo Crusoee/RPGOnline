@@ -1,4 +1,4 @@
-import multiprocessing
+from queue import Queue
 import pickle
 import zlib
 import time
@@ -17,7 +17,7 @@ from SimplexNoise import simplex_noise
 # Constants
 HOST = "0.0.0.0"
 PORT = 65432
-TICK_RATE = 1 / 30 # 60 Hz
+TICK_RATE = 1 / 30 # 30 Hz
 MAX_PLAYERS = 80
 
 async def send_message(writer: asyncio.StreamWriter, data, use_compression=True):
@@ -74,29 +74,29 @@ def match_dict(dictionary1, dictionary2_set):
     return dict_copy
 
 async def append(file_name, new_data):
-        # Appending it to the current list of players
-        try:
-            # Read the existing data
-            async with aiofiles.open(file_name, mode='r') as json_file:
-                try:
-                    data = json.loads(await json_file.read())
-                except json.JSONDecodeError:
-                    # File might be empty or invalid JSON, start with empty data
-                    data = []
+    # Appending it to the current list of players
+    try:
+        # Read the existing data
+        async with aiofiles.open(file_name, mode='r') as json_file:
+            try:
+                data = json.loads(await json_file.read())
+            except json.JSONDecodeError:
+                # File might be empty or invalid JSON, start with empty data
+                data = []
 
-            # Append the new data
-            if isinstance(data, list):  # Ensure we're working with a list
-                data.append(new_data)
-            else:
-                raise ValueError("JSON data is not a list, appending is not possible.")
+        # Append the new data
+        if isinstance(data, list):  # Ensure we're working with a list
+            data.append(new_data)
+        else:
+            raise ValueError("JSON data is not a list, appending is not possible.")
 
-            # Write the updated data back to the file
-            async with aiofiles.open(file_name, mode='w') as json_file:
-                await json_file.write(json.dumps(data, indent=4))
-        except FileNotFoundError:
-            # If the file does not exist, create it with the new data as the first entry
-            async with aiofiles.open(file_name, mode='w') as json_file:
-                await json_file.write(json.dumps([new_data], indent=4))
+        # Write the updated data back to the file
+        async with aiofiles.open(file_name, mode='w') as json_file:
+            await json_file.write(json.dumps(data, indent=4))
+    except FileNotFoundError:
+        # If the file does not exist, create it with the new data as the first entry
+        async with aiofiles.open(file_name, mode='w') as json_file:
+            await json_file.write(json.dumps([new_data], indent=4))
 
 async def game_loop(client_data, action_queue, client_stats, client_con):
     """
@@ -273,7 +273,7 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
         except Exception as e:
             print(traceback.format_exc())
 
-async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, client_data, client_stats_lock, action_queue, client_stats, client_con):
+async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, client_data, action_queue, client_stats, client_con):
     # print(f"Connection with {addr[0]} on port {addr[1]} started...")
 
     """
@@ -352,6 +352,8 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 'energyconsumptionrate' : 30,
                 'energyconsumptionratecntr' : 0,
                 'lowenergyspeed' : 0.5,
+
+                'inventory' : [] 
             }
     
     """
@@ -436,9 +438,6 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
     while True:
         try:
-            # creating a mutable copy of client data
-            info = client_data[username]
-
             # get the message from the client
             updates = await get_message(reader, False)
             
@@ -446,21 +445,18 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 break
 
             # Stats that the server trusts from the client
-            info['x'] = updates[0]['x']
-            info['y'] = updates[0]['y']
-            info['nme'] = updates[0]['nme']
-            info['swim'] = updates[0]['swim']
-            info['angle'] = updates[0]['angle']
-            info['ismoving'] = updates[0]['ismoving']
-            info['animcntr'] = updates[0]['animcntr']
+            client_data[username]['x'] = updates[0]['x']
+            client_data[username]['y'] = updates[0]['y']
+            client_data[username]['nme'] = updates[0]['nme']
+            client_data[username]['swim'] = updates[0]['swim']
+            client_data[username]['angle'] = updates[0]['angle']
+            client_data[username]['ismoving'] = updates[0]['ismoving']
+            client_data[username]['animcntr'] = updates[0]['animcntr']
 
             # If an action is created by the client, add it to the queue
             if updates[0]['action']['type'] != None and client_stats[username]['hlth'] > 0:
                 updates[0]['action']['initiator'] = username
                 action_queue.put(updates[0]['action'])
-
-            # Finally, update the client_data dict
-            client_data[username] = info
 
         except (TimeoutError, KeyError, ConnectionResetError) as e:
             print(f"Error processing data from {username}: {traceback.format_exc()}")
@@ -495,9 +491,6 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     # print(f"Connection with {addr[0]} on port {addr[1]} finished...")
 
 async def start_server():
-    from queue import Queue
-    client_stats_lock = multiprocessing.Lock()
-
     client_data = dict()
     client_stats = dict()
     client_con = dict()
@@ -506,7 +499,7 @@ async def start_server():
     gameloop = asyncio.create_task(game_loop(client_data,action_queue,client_stats,client_con))
 
     server = await asyncio.start_server(
-        lambda r, w: handle_client(r, w, client_data, client_stats_lock, action_queue, client_stats, client_con),
+        lambda r, w: handle_client(r, w, client_data, action_queue, client_stats, client_con),
         HOST,
         PORT
     )
