@@ -1,4 +1,3 @@
-import socket
 import multiprocessing
 import pickle
 import zlib
@@ -498,7 +497,6 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 async def start_server():
     from queue import Queue
     client_stats_lock = multiprocessing.Lock()
-    manager = multiprocessing.Manager()
 
     client_data = dict()
     client_stats = dict()

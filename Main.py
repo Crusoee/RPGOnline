@@ -8,7 +8,7 @@ from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, NUM_CH
 from Client import client_communication_loop
 import Render
 from Menu import Menu
-
+ 
 # --- main ---
 def game_loop(player, shared_memory):
     raylib.SetConfigFlags(rl.FLAG_WINDOW_RESIZABLE)
@@ -57,7 +57,9 @@ def game_loop(player, shared_memory):
 
     menu_textures = {
         "written_font" : written_font,
-
+        
+        "pack" : rl.load_texture("Textures\Menu\\farm tool icons calciumtrice.png"),
+        "inventory" : rl.load_texture("Textures\Menu\WoodPlank.png"),
         "parchment" : rl.load_texture("Textures\Menu\scroll.png")
     }
 

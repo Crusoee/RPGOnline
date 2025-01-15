@@ -53,8 +53,7 @@ def client_communication_loop(shared_memory, login):
     send_message(s, login, False)
     shared_memory["login_successful"] = get_message(s, False)
     if shared_memory["login_successful"] == False:
-        print("""If logging in: Either wrong username/password or account already in use...
-              If creating an account: username already exists...""")
+        print("If logging in: Either wrong username/password or account already in use...\nIf creating an account: username already exists...")
         return
 
     while shared_memory['running']:

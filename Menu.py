@@ -52,17 +52,29 @@ class Menu:
         self.screen_height = screen_height
         self.screen_width = screen_width
         self.menu_textures = menu_textures
-        self.stats_button = OnOffButton(rl.Rectangle(0,0,250,80), menu_textures["parchment"])
+        self.stats_button = OnOffButton(rl.Rectangle(30,30,250,80), menu_textures["parchment"])
         self.location_button = OnOffButton(rl.Rectangle(screen_width - menu_textures['parchment'].width,0,250,80), menu_textures["parchment"])
         self.buttons.append(self.stats_button)
         
         
     def render(self,player):
 
+        self.menu_textures['inventory']
+
+        rl.draw_texture_pro(self.menu_textures['inventory'], 
+                                rl.Rectangle(0,0,self.menu_textures['inventory'].width,self.menu_textures['inventory'].height), 
+                                rl.Rectangle(0,0,self.menu_textures['inventory'].width * 2,self.menu_textures['inventory'].height * 2), 
+                                rl.Vector2(0,0), 0.0, rl.WHITE) 
+        
+        rl.draw_texture_pro(self.menu_textures['pack'], 
+                                rl.Rectangle(0,0,64,64), 
+                                rl.Rectangle(0,100,64 * 3,64 * 3), 
+                                rl.Vector2(0,0), 0.0, rl.WHITE) 
+
         if self.stats_button.is_on:
             rl.draw_texture_pro(self.menu_textures["parchment"], 
                                 rl.Rectangle(0,0,self.menu_textures["parchment"].width,self.menu_textures["parchment"].height), 
-                                rl.Rectangle(0,0,250,600), 
+                                rl.Rectangle(30,30,250,600), 
                                 rl.Vector2(0,0), 0.0, rl.WHITE)    
 
             if raylib.GetMouseWheelMove() > 0:
@@ -74,26 +86,26 @@ class Menu:
             for key, item in player.stats.items():
                 cntr += 22
                 if 50 < cntr < 500:
-                    rl.draw_text_ex(self.menu_textures["written_font"], f"{key}: {player.stats[key]}", rl.Vector2(35, cntr), 40, 0.0, rl.BLACK)
+                    rl.draw_text_ex(self.menu_textures["written_font"], f"{key}: {player.stats[key]}", rl.Vector2(65, cntr), 40, 0.0, rl.BLACK)
         else:
             rl.draw_texture_pro(self.menu_textures["parchment"], 
                                 rl.Rectangle(0,0,self.menu_textures["parchment"].width,140), 
-                                rl.Rectangle(0,0,250,80), 
+                                rl.Rectangle(30,30,250,80), 
                                 rl.Vector2(0,0), 0.0, rl.WHITE) 
             rl.draw_text_ex(self.menu_textures["written_font"], "...", rl.Vector2(50, 20), 40, 0.0, rl.BLACK)
 
 
-        if self.location_button.is_on:
-            rl.draw_texture_pro(self.menu_textures["parchment"], 
-                                rl.Rectangle(0,0,self.menu_textures["parchment"].width,self.menu_textures["parchment"].height), 
-                                rl.Rectangle(self.screen_width - self.menu_textures["parchment"].width,0,250,600), 
-                                rl.Vector2(0,0), 0.0, rl.WHITE)    
-        else:
-            rl.draw_texture_pro(self.menu_textures["parchment"], 
-                                rl.Rectangle(0,0,self.menu_textures["parchment"].width,140), 
-                                rl.Rectangle(self.screen_width - self.menu_textures["parchment"].width,0,250,80), 
-                                rl.Vector2(0,0), 0.0, rl.WHITE) 
-            rl.draw_text_ex(self.menu_textures["written_font"], "...", rl.Vector2(self.screen_width - self.menu_textures["parchment"].width - 50, 20), 40, 0.0, rl.BLACK)
+        # if self.location_button.is_on:
+        #     rl.draw_texture_pro(self.menu_textures["parchment"], 
+        #                         rl.Rectangle(0,0,self.menu_textures["parchment"].width,self.menu_textures["parchment"].height), 
+        #                         rl.Rectangle(self.screen_width - self.menu_textures["parchment"].width,0,250,600), 
+        #                         rl.Vector2(0,0), 0.0, rl.WHITE)    
+        # else:
+        #     rl.draw_texture_pro(self.menu_textures["parchment"], 
+        #                         rl.Rectangle(0,0,self.menu_textures["parchment"].width,140), 
+        #                         rl.Rectangle(self.screen_width - self.menu_textures["parchment"].width,0,250,80), 
+        #                         rl.Vector2(0,0), 0.0, rl.WHITE) 
+        #     rl.draw_text_ex(self.menu_textures["written_font"], "...", rl.Vector2(self.screen_width - self.menu_textures["parchment"].width - 50, 20), 40, 0.0, rl.BLACK)
 
         # if rl.gui_button(rl.Rectangle(0,30,70,20), "Stats"):
         #     if self.stats:
