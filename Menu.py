@@ -47,13 +47,12 @@ class Menu:
     inventory = False
 
 
-    def __init__(self, screen_width, screen_height, menu_textures):
+    def __init__(self, window_size, menu_textures):
         self.buttons = []
-        self.screen_height = screen_height
-        self.screen_width = screen_width
+        self.window_size = window_size
         self.menu_textures = menu_textures
         self.stats_button = OnOffButton(rl.Rectangle(30,30,250,80), menu_textures["parchment"])
-        self.location_button = OnOffButton(rl.Rectangle(screen_width - menu_textures['parchment'].width,0,250,80), menu_textures["parchment"])
+        self.location_button = OnOffButton(rl.Rectangle(window_size[0] - menu_textures['parchment'].width,0,250,80), menu_textures["parchment"])
         self.buttons.append(self.stats_button)
         
         
@@ -118,7 +117,7 @@ class Menu:
 
         if self.inventory:
                 
-            inventory = rl.gui_grid(rl.Rectangle(self.screen_width - 150,30,150,self.screen_height - 100), "Inventory", 1.1, 8, rl.get_mouse_position())
+            inventory = rl.gui_grid(rl.Rectangle(self.screen_width - 150,30,150,self.window_size[1] - 100), "Inventory", 1.1, 8, rl.get_mouse_position())
             print(inventory)
 
             # if inventory == 0:

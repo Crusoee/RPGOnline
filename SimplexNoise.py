@@ -2,6 +2,7 @@ import noise
 import numpy as np
 import matplotlib.pyplot as plt
 from CONSTANTS import CHUNK_SIZE
+import random
 
 # Parameters for the Perlin noise
 width = 100   # Width of the tilemap
@@ -35,13 +36,58 @@ def generate_landscape():
     return terrain_map
 
 # Function to generate Perlin noise at given coordinates
-def simplex_noise(x, y, scale=75.0, octaves=4, persistence=.3, lacunarity=2.0, seed=1):
-    return noise.snoise2(x / scale,
-                         y / scale,
-                         octaves=octaves,
-                         persistence=persistence,
-                         lacunarity=lacunarity,
-                         base=seed)
+# x, y, scale=75.0, octaves=4, persistence=.3, lacunarity=2.0, seed=2
+
+"""
+        noise.snoise2(x / 1000,
+        y / 1000,
+        octaves=4,
+        persistence=.3,
+        lacunarity=2.0,
+        base=2),
+
+        noise.snoise2(x / 800,
+        y / 800,
+        octaves=5,
+        persistence=.3,
+        lacunarity=5,
+        base=2),
+"""
+
+def simplex_noise(x, y):
+
+    list_noise = [
+        noise.snoise2(x / 5000,
+        y / 5000,
+        octaves=4,
+        persistence=.3,
+        lacunarity=2.0,
+        base=2),
+
+        noise.snoise2(x / 1000,
+        y / 1000,
+        octaves=5,
+        persistence=.3,
+        lacunarity=5,
+        base=2),
+        
+        noise.snoise2(x / 800,
+        y / 800,
+        octaves=6,
+        persistence=.3,
+        lacunarity=5,
+        base=2)
+
+        -1.2 * noise.snoise2(x / 800,
+        y / 800,
+        octaves=6,
+        persistence=.3,
+        lacunarity=5,
+        base=3)        
+
+    ]
+
+    return sum(list_noise)
 
 def generate_terrain_chunk(chunk_x, chunk_y):
     """Generates Perlin noise for a given chunk using world coordinates."""
@@ -61,3 +107,7 @@ def show_landscape(terrain_map):
     plt.colorbar()
     plt.title("2D Perlin Noise Terrain Map")
     plt.show()
+
+def generate_palms(chunk_x, chunk_y):
+    random.seed(10)
+    palm_locations = [(random.randint(-CHUNK_SIZE * 64, CHUNK_SIZE * 64), random.randint(-CHUNK_SIZE * 64, CHUNK_SIZE * 64)) for x in range(3)]

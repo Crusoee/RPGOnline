@@ -4,9 +4,6 @@ import pickle
 import zlib
 import time
 
-
-from SimplexNoise import simplex_noise
-
 # Constants
 HOST = "0.0.0.0"
 PORT = 65432

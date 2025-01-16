@@ -4,15 +4,16 @@ import multiprocessing
 
 
 from Player import Player
-from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS, PLAYER_WIDTH,PLAYER_HEIGHT
+from CONSTANTS import TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS, PLAYER_WIDTH,PLAYER_HEIGHT
 from Client import client_communication_loop
 import Render
 from Menu import Menu
  
 # --- main ---
-def game_loop(player, shared_memory):
+def game_loop(player, shared_memory, window_size):
+
     raylib.SetConfigFlags(rl.FLAG_WINDOW_RESIZABLE)
-    raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, b"RPG Online")
+    raylib.InitWindow(window_size[0], window_size[1], b"RPG Online")
     # rl.toggle_fullscreen()
     raylib.SetWindowPosition(100,100)
     
@@ -22,9 +23,11 @@ def game_loop(player, shared_memory):
 
     """
     LOADING IN TEXTURES AND FONTS, ETC...
+
+    from what I understand, all textures must be loaded here and not on any other file. Not sure why.
     """
 
-    render_texture = rl.load_render_texture(SCREEN_WIDTH, SCREEN_HEIGHT)
+    render_texture = rl.load_render_texture(window_size[0], window_size[1])
 
     player_shaders = {
         "invert_text" : rl.load_shader("", "invert_text.fs")
@@ -63,9 +66,13 @@ def game_loop(player, shared_memory):
         "parchment" : rl.load_texture("Textures\Menu\scroll.png")
     }
 
+
+
+    palm = rl.load_texture("Textures\Environment\palmtree.png")
+
     chunk_data = {}
 
-    menu = Menu(SCREEN_WIDTH, SCREEN_HEIGHT, menu_textures)
+    menu = Menu(window_size, menu_textures)
 
     while not raylib.WindowShouldClose():
         # -------------Draw-------------------
@@ -83,6 +90,13 @@ def game_loop(player, shared_memory):
 
         player.draw(player_textures, player_shaders)
 
+        # for loc in palm_locations:
+        rl.draw_texture_pro(palm, rl.Rectangle(0,0,palm.width, palm.height), 
+                            rl.Rectangle(0,0,palm.width * 2, palm.height * 2), 
+                            rl.Vector2(0,0),
+                            0.0, 
+                            rl.WHITE)
+
         # for jim in chunk_data[int(player.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(player.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1]:
         #     raylib.DrawRectangleRec(jim, rl.GREEN)
 
@@ -93,8 +107,8 @@ def game_loop(player, shared_memory):
         rl.draw_texture_rec(render_texture.texture, rl.Rectangle(0,0,render_texture.texture.width, -render_texture.texture.height),rl.Vector2(0,0),rl.WHITE)
 
         # 105 fps
-        rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", SCREEN_WIDTH - 180, 50, 40, rl.BLACK)
-        rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", SCREEN_WIDTH - 200, 100, 30, rl.BLACK)
+        rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", window_size[0] - 180, 50, 40, rl.BLACK)
+        rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", window_size[0] - 200, 100, 30, rl.BLACK)
 
         Render.draw_info(player)
 
@@ -124,6 +138,11 @@ def game_loop(player, shared_memory):
         # Moving and Colliding Player
         player.move(chunk_data, shared_memory)
 
+        if rl.get_screen_width() != window_size[0] or rl.get_screen_height() != window_size[1]:
+            window_size[0] = rl.get_screen_width()
+            window_size[1] = rl.get_screen_height()
+            player.camera.offset = rl.Vector2(window_size[0]/2 - player.locsize.width/2, window_size[1]/2)
+
         # updating my current coordinates to the server
         shared_memory['player'] = {'x' : player.locsize.x,
                                'y' : player.locsize.y,
@@ -142,13 +161,17 @@ def game_loop(player, shared_memory):
     raylib.CloseWindow()
 
 def main() -> int:
+    window_size = [
+        1200,
+        800
+    ]
     
     while True:
         intent = input("Login (0) or Create an Account (1)")
         username = input("Username: ")
         password = input("Password: ")
 
-        player = Player(rl.SKYBLUE, rl.Rectangle(500, 500, PLAYER_WIDTH, PLAYER_HEIGHT), 500, username)
+        player = Player(0, 0, 500, username, window_size)
         
         manager = multiprocessing.Manager()
         shared_memory = manager.dict()
@@ -184,7 +207,7 @@ def main() -> int:
         if shared_memory["login_successful"] == True:
             break
 
-    game_loop(player, shared_memory)
+    game_loop(player, shared_memory, window_size)
 
     communicationloop.join()
 

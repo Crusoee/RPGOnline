@@ -15,13 +15,16 @@ EMPTY = {
         }
 
 class Player():
-    def __init__(self, color, locsize, speed, name):
+    def __init__(self, x, y, speed, name, window_size):
 
         self.zoom = 1.3
 
         self.name = name
 
-        self.respawn = rl.Vector2(locsize.x,locsize.y)
+        pixel_coordx = x * 64
+        pixel_coordy = y * 64
+
+        self.respawn = rl.Vector2(pixel_coordx,pixel_coordy)
 
         self.angle = -90
         self.animation_cntr = 0
@@ -98,17 +101,16 @@ class Player():
         self.in_water = False
 
         self.speed = speed
-        self.color = color
 
-        self.locsize = locsize
+        self.locsize = rl.Rectangle(pixel_coordx, pixel_coordy, PLAYER_WIDTH, PLAYER_HEIGHT)
 
-        self.base = rl.Vector2(-int(locsize.width / 2), -locsize.height)
+        self.base = rl.Vector2(-int(self.locsize.width / 2), -self.locsize.height)
         self.coordinate = None
 
-        self.prev_locsize = rl.Vector2(locsize.x - self.base.x,locsize.y - self.base.y)
+        self.prev_locsize = rl.Vector2(self.locsize.x - self.base.x,self.locsize.y - self.base.y)
 
         self.camera = rl.Camera2D(
-            rl.Vector2(SCREEN_WIDTH/2 - self.locsize.width/2, SCREEN_HEIGHT/2),  # Offset from the center of the screen
+            rl.Vector2(window_size[0]/2 - self.locsize.width/2, window_size[1]/2),  # Offset from the center of the screen
             rl.Vector2(self.locsize.x, self.locsize.y),      # The target position in the world
             0.0,                   # Camera rotation in degrees
             1.3                    # Camera zoom (1.0 is default)

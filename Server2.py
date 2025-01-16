@@ -12,12 +12,11 @@ import aiofiles
 # import copy
 
 from NPC import NPC
-from SimplexNoise import simplex_noise
 
 # Constants
 HOST = "0.0.0.0"
 PORT = 65432
-TICK_RATE = 1 / 30 # 60 Hz
+TICK_RATE = 1 / 60 # 60 Hz
 MAX_PLAYERS = 80
 
 async def send_message(writer: asyncio.StreamWriter, data, use_compression=True):
