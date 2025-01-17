@@ -130,10 +130,10 @@ class Menu:
     def logic(self, player):
 
         if not self.buttons[0].is_on:
-            if raylib.GetMouseWheelMove() > 0 and player.zoom < 1.5:
+            if raylib.GetMouseWheelMove() > 0: # and player.zoom < 1.5:
                 player.zoom += 0.1
                 player.camera.zoom = player.zoom
-            elif raylib.GetMouseWheelMove() < 0 and player.zoom > 1.0:
+            elif raylib.GetMouseWheelMove() < 0: # and player.zoom > 1.0:
                 player.zoom -= 0.1
                 player.camera.zoom = player.zoom
 

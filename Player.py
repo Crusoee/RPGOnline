@@ -3,8 +3,8 @@ import pyray as rl
 import math
 from Helper import select_player, distance
 
-from SimplexNoise import simplex_noise
-import Render
+from Generation import simplex_noise
+import Generation
 from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH
 
 EMPTY = {
@@ -116,7 +116,7 @@ class Player():
             1.3                    # Camera zoom (1.0 is default)
         )
 
-    def draw(self, textures, player_shaders):
+    def draw(self, textures):
 
 
         if self.coordinate != None and self.attacking == False:
@@ -346,7 +346,7 @@ class Player():
                         (self.locsize.y - self.base.y) // TILE_SIZE)
 
         # Changing the speed of your player depending on what terrain their standing on
-        if value < Render.water:
+        if value < Generation.water:
             self.speed = self.stats['swmspeed'] * self.stats['hinderedspeedmult']
             self.in_water = True
         else:

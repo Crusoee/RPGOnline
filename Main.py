@@ -27,12 +27,6 @@ def game_loop(player, shared_memory, window_size):
     from what I understand, all textures must be loaded here and not on any other file. Not sure why.
     """
 
-    render_texture = rl.load_render_texture(window_size[0], window_size[1])
-
-    player_shaders = {
-        "invert_text" : rl.load_shader("", "invert_text.fs")
-    }
-
     cursorTexture = rl.load_texture("Mouse\dwarven_gauntlet.png")
 
     tiles = {'water_tile' : rl.load_texture("topdown_tiles\\tiles\\deep0\\straight\\0\\0.png"),
@@ -66,8 +60,6 @@ def game_loop(player, shared_memory, window_size):
         "parchment" : rl.load_texture("Textures\Menu\scroll.png")
     }
 
-
-
     palm = rl.load_texture("Textures\Environment\palmtree.png")
 
     chunk_data = {}
@@ -81,40 +73,21 @@ def game_loop(player, shared_memory, window_size):
         raylib.ClearBackground(rl.RAYWHITE)
         raylib.BeginMode2D(player.camera)
 
-        Render.draw_tiles(player, chunk_data, tiles)
+        Render.draw_tiles(player, chunk_data, tiles, palm)
 
         Render.draw_npcs(shared_memory, npc)
-
+ 
         Render.draw_players(shared_memory, player_textures)
 
-
-        player.draw(player_textures, player_shaders)
-
-        # for loc in palm_locations:
-        rl.draw_texture_pro(palm, rl.Rectangle(0,0,palm.width, palm.height), 
-                            rl.Rectangle(0,0,palm.width * 2, palm.height * 2), 
-                            rl.Vector2(0,0),
-                            0.0, 
-                            rl.WHITE)
-
-        # for jim in chunk_data[int(player.locsize.x // (TILE_SIZE * CHUNK_SIZE)), int(player.locsize.y // (TILE_SIZE * CHUNK_SIZE))][1]:
-        #     raylib.DrawRectangleRec(jim, rl.GREEN)
+        player.draw(player_textures)
 
         raylib.EndMode2D()
-        # raylib.EndTextureMode()
-        # raylib.BeginDrawing()
-
-        rl.draw_texture_rec(render_texture.texture, rl.Rectangle(0,0,render_texture.texture.width, -render_texture.texture.height),rl.Vector2(0,0),rl.WHITE)
 
         # 105 fps
         rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", window_size[0] - 180, 50, 40, rl.BLACK)
         rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", window_size[0] - 200, 100, 30, rl.BLACK)
 
-        Render.draw_info(player)
-
         menu.render(player)
-
-        # rl.draw_texture_v(cursorTexture, rl.get_mouse_position(), rl.WHITE)
 
         rl.draw_texture_pro(cursorTexture, rl.Rectangle(0,0,cursorTexture.width, cursorTexture.height), 
                             rl.Rectangle(rl.get_mouse_position().x,rl.get_mouse_position().y,cursorTexture.width + 20, cursorTexture.height + 20), 
@@ -154,9 +127,6 @@ def game_loop(player, shared_memory, window_size):
                                'action' : player.action}
 
     shared_memory['running'] = False
-
-    rl.unload_shader(player_shaders['invert_text'])
-    rl.unload_render_texture(render_texture)
 
     raylib.CloseWindow()
 

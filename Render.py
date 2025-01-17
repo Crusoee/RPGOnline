@@ -1,45 +1,11 @@
 import pyray as rl
 import raylib as raylib
 from CONSTANTS import NUM_CHUNKS, CHUNK_SIZE, TILE_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH, SCREEN_WIDTH
-from SimplexNoise import generate_terrain_chunk
+from Generation import generate_terrain_chunk, generate_palms, generate_collision_chunk, get_tile_texture, sand
 from Helper import distance
 import math
 
-water = -.1
-shallow = 0
-sand = 0.1
-grass = 0.3
-forest = 0.48
-rocks = None
-
-def get_tile_texture(value, tiles):
-    if value < water:
-        return tiles['water_tile']
-    elif value < shallow:
-        return tiles['shallow_tile']
-    elif value < sand:
-        return tiles['sand_tile']
-    elif value < grass:
-        return tiles['grass_tile']
-    elif value < forest:
-        return tiles['forest_tile']
-    else:
-        return tiles['rock_tile']
-    
-def generate_collision_chunk(values, chunk_x, chunk_y):
-    chunkers = []
-
-    for y in range(values.shape[1]):
-        for x in range(values.shape[0]):
-            # Convert chunk coordinates to world coordinates
-            if values[y, x] > forest:
-                # print((chunk_x * CHUNK_SIZE + x) * TILE_SIZE, (chunk_y * CHUNK_SIZE + y) * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                chunkers.append(rl.Rectangle((chunk_x * CHUNK_SIZE + x) * TILE_SIZE, (chunk_y * CHUNK_SIZE + y) * TILE_SIZE, TILE_SIZE, TILE_SIZE))
-    
-    return chunkers
-
-
-def draw_tiles(player, chunk_data, tiles):
+def draw_tiles(player, chunk_data, tiles, palm_texture):
     # Calculate player's chunk position
     player_chunk_x = player.locsize.x // (CHUNK_SIZE * TILE_SIZE)
     player_chunk_y = player.locsize.y // (CHUNK_SIZE * TILE_SIZE)
@@ -57,8 +23,9 @@ def draw_tiles(player, chunk_data, tiles):
             if (chunk_x, chunk_y) not in chunk_data:
                 terrain_data = generate_terrain_chunk(chunk_x, chunk_y)
                 collision_data = generate_collision_chunk(terrain_data, chunk_x, chunk_y)
+                palm_data = generate_palms(chunk_x, chunk_y)
                 # print(collision_data, chunk_x, chunk_y)
-                chunk_data[chunk_x, chunk_y] = [terrain_data,collision_data]
+                chunk_data[chunk_x, chunk_y] = [terrain_data,collision_data, palm_data]
 
             # Draw tiles in the chunk
             for y in range(CHUNK_SIZE):
@@ -68,6 +35,17 @@ def draw_tiles(player, chunk_data, tiles):
                     tile_draw_x = (chunk_x * CHUNK_SIZE + x) * TILE_SIZE
                     tile_draw_y = (chunk_y * CHUNK_SIZE + y) * TILE_SIZE
                     rl.draw_texture(tile_texture, tile_draw_x, tile_draw_y, rl.WHITE)
+
+    for chunk_y in range(int(chunk_y_start), int(chunk_y_end)):
+        for chunk_x in range(int(chunk_x_start), int(chunk_x_end)):
+            # chunk_data[chunk_x, chunk_y] = [terrain_data,collision_data, palm_data]
+
+            for palm in chunk_data[chunk_x, chunk_y][2]:
+                rl.draw_texture_pro(palm_texture, rl.Rectangle(0,0,palm_texture.width * palm[2], palm_texture.height), 
+                                    rl.Rectangle(palm[0],palm[1],palm_texture.width * 2 * palm[3], palm_texture.height * 2 * palm[3]), 
+                                    rl.Vector2(0,0),
+                                    0.0, 
+                                    rl.WHITE)
 
 def draw_players(shared_memory,player_textures):
     for key, value in shared_memory['playersupdate'][0].items():
@@ -213,16 +191,6 @@ def draw_npcs(shared_memory, npc):
         except (KeyError) as e:
             print("Error: ", e)
 
-def draw_info(player):
-    # rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", 50, 100, 40, rl.BLACK)
-    # rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", 50, 50, 40, rl.BLACK)
-    # rl.draw_text(f"X: {player.locsize.x}, Y: {player.locsize.y}", 50, 50, 40, rl.BLACK)
-    # rl.draw_text(f"C X: {player.locsize.x // (TILE_SIZE * CHUNK_SIZE)}, C Y: {player.locsize.y // (TILE_SIZE * CHUNK_SIZE)}", 50, 150, 40, rl.BLACK)
-    
-    # rl.draw_text(f"health: {player.stats['hlth']}", 20, 20, 20, rl.RED)
-    # rl.draw_text(f"damage: {player.stats['dmg']}", 20, 40, 20, rl.BLACK)
-    # rl.draw_text(f"armor: {player.stats['arm']}", 20, 60, 20, rl.GRAY)
-    # rl.draw_text(f"regen: {player.stats['regens'] / 60} sec", 20, 80, 20, rl.GREEN)
-    # rl.draw_text(f"magic: {player.stats['arm']}", 20, 100, 20, rl.BLUE)
+def draw_loop():
     ...
 
