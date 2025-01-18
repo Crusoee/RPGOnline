@@ -7,27 +7,32 @@ from Generation import simplex_noise
 import Generation
 from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH
 
-EMPTY = {
-            'type' : None,
-            'target' :None,
-            'x' : None,
-            'y' : None,
-        }
-
 class Player():
-    def __init__(self, x, y, speed, name, window_size):
-
-        self.zoom = 1.3
+    def __init__(self, x, y, name):
 
         self.name = name
 
-        pixel_coordx = x * 64
-        pixel_coordy = y * 64
+        pixel_coordx = x
+        pixel_coordy = y
 
-        self.respawn = rl.Vector2(pixel_coordx,pixel_coordy)
+        self.speed = 500
 
         self.angle = -90
         self.animation_cntr = 0
+
+        self.attacking = False
+        self.is_moving = False
+        self.in_water = False
+
+
+        self.locsize = rl.Rectangle(pixel_coordx, pixel_coordy, PLAYER_WIDTH, PLAYER_HEIGHT)
+        self.base = rl.Vector2(-int(self.locsize.width / 2), -self.locsize.height)
+        self.prev_locsize = rl.Vector2(self.locsize.x - self.base.x,self.locsize.y - self.base.y)
+
+        self.coordinate = None
+        self.respawn = rl.Vector2(self.locsize.x,self.locsize.y)
+        self.can_move = True
+
 
         self.action = {
                 'type' : None,
@@ -36,7 +41,17 @@ class Player():
                 'y' : None,
             }
         
-        self.stats =    {  
+        self.updates = {
+                    'x' : 0,
+                    'y' : 0,
+                    'nme' : '',
+                    'swim' : False,
+                    'angle' : -90,
+                    'ismoving' : 0,
+                    'animcntr' : 0
+                }
+        
+        self.stats = {
                 'dmg' : 10,
                 'lifesteal' : 0,
                 'poison' : 0,
@@ -61,8 +76,6 @@ class Player():
                 'regens' : 60,
                 'regencntr' : 0,
                 'regenbonus' : 1,
-
-                # 'hit' : '',
 
                 'atc' : 30,
                 'ats' : 30,
@@ -91,33 +104,8 @@ class Player():
                 'energyconsumptionratecntr' : 0,
                 'lowenergyspeed' : 0.5,
             }
-        
-        # self.distance = 50
-        # self.tracking_distance = 1000
-        
-        self.attacking = False
-        self.can_move = True
-        self.is_moving = False
-        self.in_water = False
-
-        self.speed = speed
-
-        self.locsize = rl.Rectangle(pixel_coordx, pixel_coordy, PLAYER_WIDTH, PLAYER_HEIGHT)
-
-        self.base = rl.Vector2(-int(self.locsize.width / 2), -self.locsize.height)
-        self.coordinate = None
-
-        self.prev_locsize = rl.Vector2(self.locsize.x - self.base.x,self.locsize.y - self.base.y)
-
-        self.camera = rl.Camera2D(
-            rl.Vector2(window_size[0]/2 - self.locsize.width/2, window_size[1]/2),  # Offset from the center of the screen
-            rl.Vector2(self.locsize.x, self.locsize.y),      # The target position in the world
-            0.0,                   # Camera rotation in degrees
-            1.3                    # Camera zoom (1.0 is default)
-        )
 
     def draw(self, textures):
-
 
         if self.coordinate != None and self.attacking == False:
             # raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
@@ -266,8 +254,6 @@ class Player():
                 self.animation_cntr = 0
 
 
-        # rl.begin_shader_mode(player_shaders['invert_text'])
-
         text_size = rl.measure_text_ex(textures["name_font"], self.name, 30, 0.0)
         rl.draw_text_ex(textures["name_font"], self.name, rl.Vector2(int(self.locsize.x - (text_size.x / 2) + PLAYER_WIDTH / 2), int(self.locsize.y - 80)), 40, 0.0, rl.BLACK)
 
@@ -314,160 +300,18 @@ class Player():
         #     rl.draw_circle(int(self.locsize.x - self.base.x),int(self.locsize.y - self.base.y / 2),self.distance,rl.Color(255,255,0,100))
 
 
-    def collision(self, collidable_objects):
-        for object in collidable_objects:
-            if raylib.CheckCollisionPointRec(rl.Vector2(self.locsize.x - self.base.x,self.locsize.y - self.base.y), object):
-
-                # Left
-                if self.prev_locsize.x <= object.x:
-                    self.locsize.x = object.x + self.base.x
-                # Right
-                if self.prev_locsize.x >= object.x + object.width:
-                    self.locsize.x = object.x + object.width + self.base.x
-                # Top
-                if self.prev_locsize.y <= object.y:
-                    self.locsize.y = object.y + self.base.y
-                # Bottom
-                if self.prev_locsize.y >= object.y + object.height:
-                    self.locsize.y = object.y + object.height + self.base.y
-
-    def move(self, chunk_data, shared_memory):
-
-        # Getting players previous location
-        self.prev_locsize = rl.Vector2(self.locsize.x - self.base.x, self.locsize.y - self.base.y)
-        
-        # If your health is 0, respawn: NEEDS TO BE EXPOUNDED
-        if self.stats['hlth'] <= 0:
-            self.locsize.x = self.respawn.x
-            self.locsize.y = self.respawn.y
-
+    def update_state(self):
         # The current noise level your character is standing on
         value = simplex_noise((self.locsize.x - self.base.x) // TILE_SIZE, 
                         (self.locsize.y - self.base.y) // TILE_SIZE)
 
         # Changing the speed of your player depending on what terrain their standing on
         if value < Generation.water:
-            self.speed = self.stats['swmspeed'] * self.stats['hinderedspeedmult']
-            self.in_water = True
+            self.player.speed = self.player.stats['swmspeed'] * self.player.stats['hinderedspeedmult']
+            self.player.in_water = True
         else:
-            self.speed = self.stats['speed'] * self.stats['hinderedspeedmult']
-            self.in_water = False
-
-        # If there's a player target, follow it
-        if self.action['target'] in shared_memory['playersupdate'][0].keys():
-            player = shared_memory['playersupdate'][0][self.action['target']]
-            self.action['type'] = None
-            self.attacking = True
-            target_distance = distance(self.locsize.x,self.locsize.y, player['x'],player['y'])
-            if target_distance < self.stats['attackingdist']:
-                self.action['type'] = 'attack'
-                self.coordinate = None
-            elif target_distance > self.stats['trackingdist']:
-                self.action = EMPTY
-                self.attacking = False
-            else:
-                self.action['type'] = None
-                self.coordinate = rl.Vector2(player['x'] - self.base.x, 
-                                            player['y'] - self.base.y)
-        # If there's an NPC target, follow it
-        elif self.action['target'] in shared_memory['npcs'][0].keys():
-            self.action['type'] = None
-            self.attacking = True
-            target_distance = distance(self.locsize.x,self.locsize.y, self.action['x'],self.action['y'])
-            if target_distance < self.stats['attackingdist']:
-                self.action['type'] = 'attacknpc'
-                self.coordinate = None
-            elif target_distance > self.stats['trackingdist']:
-                self.action = EMPTY
-                self.attacking = False
-            else:
-                self.action['type'] = None
-                self.coordinate = rl.Vector2(self.action['x'] + shared_memory['npcs'][0][self.action['target']].size // 2,self.action['y'] + shared_memory['npcs'][0][self.action['target']].size // 2)            
-        else:
-            self.action = EMPTY
-
-
-        # If you press the right mouse button, set coordinate to that location to move
-        if raylib.IsMouseButtonDown(raylib.MOUSE_BUTTON_RIGHT) and not self.action['target']:
-            mouse_position_window = rl.get_mouse_position()
-            self.coordinate = rl.Vector2(
-                (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
-                (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
-            )
-        
-        # moving depending on if there is a coordinate to follow
-        if self.coordinate != None and self.can_move:
-            self.is_moving = True
-            displaced = rl.Vector2(self.coordinate.x - self.locsize.x + self.base.x, self.coordinate.y - self.locsize.y + self.base.y)
-            length = math.sqrt(displaced.x**2 + displaced.y**2)
-            if length != 0:
-                dir_vec = rl.Vector2(displaced.x / length, displaced.y / length)
-                self.locsize.x += dir_vec.x * self.speed * raylib.GetFrameTime()
-                self.locsize.y += dir_vec.y * self.speed * raylib.GetFrameTime()
-                if length < 150.0 * raylib.GetFrameTime():
-                    self.coordinate = None
-        else:
-            self.is_moving = False
-
-
-        if raylib.IsKeyPressed(raylib.KEY_V):
-            self.respawn.x = self.locsize.x
-            self.respawn.y = self.locsize.y
-
-        self.camera.target.x = self.locsize.x
-        self.camera.target.y = self.locsize.y
-
-        self.collision(chunk_data[int((self.locsize.x - self.base.x) // (TILE_SIZE * CHUNK_SIZE)), int((self.locsize.y - self.base.y) // (TILE_SIZE * CHUNK_SIZE))][1])
-
-    def select(self, shared_memory):
-
-        if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_RIGHT):
-            
-            mouse_position_window = rl.get_mouse_position()
-            select_coordinate = rl.Vector2(
-                (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
-                (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
-            )
-
-            for key, value in shared_memory['playersupdate'][0].items():
-                if key == shared_memory['user']:
-                    continue
-
-                player = shared_memory['playersupdate'][0][key]
-
-                if raylib.CheckCollisionPointRec(select_coordinate, select_player(player)):
-                    self.action['target'] = key
-                    return
-                
-            for key, value in shared_memory['npcs'][0].items():
-                npc = shared_memory['npcs'][0][key]
-                if raylib.CheckCollisionPointRec(select_coordinate, rl.Rectangle(npc.x,npc.y,npc.size,npc.size)):
-                    self.action['target'] = f"{npc.x}{npc.y}"
-                    self.action['x'] = npc.x
-                    self.action['y'] = npc.y
-                    return
-            
-            self.attacking = False
-            self.action['type'] = None
-            self.action['target'] = None
-            self.action['x'] = None
-            self.action['y'] = None
-
-        if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_LEFT):
-            mouse_position_window = rl.get_mouse_position()
-            select_coordinate = rl.Vector2(
-                (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
-                (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
-            )
-
-            for key, value in shared_memory['playersinfo'][0].items():
-                if key == shared_memory['user']:
-                    continue
-
-                player = shared_memory['playersinfo'][0][key]
-
-                if raylib.CheckCollisionPointRec(select_coordinate, select_player(shared_memory['playersupdate'][0][key])):
-                    print(player)
+            self.player.speed = self.player.stats['speed'] * self.player.stats['hinderedspeedmult']
+            self.player.in_water = False
 
     def attack_reset(self):
         self.attacking = False
@@ -475,14 +319,6 @@ class Player():
 
     def update(self, shared_memory):
         # If my user name that the server recognizes my client as, has my stats in its player database, give me those stats
-        if shared_memory['user'] in shared_memory['playersinfo'][0].keys():
-            stats = shared_memory['playersinfo'][0][shared_memory['user']]
-
+        if self.name in shared_memory['playersinfo'][0].keys():
+            stats = shared_memory['playersinfo'][0][self.name]
             self.stats = stats
-
-            # self.stats['hlth'] = stats['hlth']
-            # self.stats['dmg'] = stats['dmg']
-            # self.stats['mgc'] = stats['mgc']
-            # self.stats['arm'] = stats['arm']
-            # self.stats['speed'] = stats['speed']
-            # self.stats['swmspeed'] = stats['swmspeed']

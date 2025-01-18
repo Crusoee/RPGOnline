@@ -289,7 +289,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     loop = asyncio.get_event_loop()
 
     # Client updates to server
-    updates =  {
+    updates = {
                 'x' : 0,
                 'y' : 0,
                 'nme' : '',

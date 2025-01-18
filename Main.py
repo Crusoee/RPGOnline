@@ -6,9 +6,12 @@ import multiprocessing
 from Player import Player
 from CONSTANTS import TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS, PLAYER_WIDTH,PLAYER_HEIGHT
 from Client import client_communication_loop
+
 import Render
-from Menu import Menu
- 
+import Menu
+import GamePlayInput
+import PlayerManager 
+
 # --- main ---
 def game_loop(player, shared_memory, window_size):
 
@@ -62,54 +65,33 @@ def game_loop(player, shared_memory, window_size):
 
     palm = rl.load_texture("Textures\Environment\palmtree.png")
 
-    chunk_data = {}
-
-    menu = Menu(window_size, menu_textures)
+    # Instances
+    menu = Menu.Menu(window_size, menu_textures)
+    render = Render.Render(player, tiles, palm, player_textures, npc, cursorTexture, menu, window_size)
+    input = GamePlayInput.GamePlayInput(player, render.camera)
+    player_manger = PlayerManager.PlayerManager(player)
 
     while not raylib.WindowShouldClose():
         # -------------Draw-------------------
-        raylib.BeginDrawing()
-        # raylib.BeginTextureMode(render_texture)
-        raylib.ClearBackground(rl.RAYWHITE)
-        raylib.BeginMode2D(player.camera)
 
-        Render.draw_tiles(player, chunk_data, tiles, palm)
-
-        Render.draw_npcs(shared_memory, npc)
- 
-        Render.draw_players(shared_memory, player_textures)
-
-        player.draw(player_textures)
-
-        raylib.EndMode2D()
-
-        # 105 fps
-        rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", window_size[0] - 180, 50, 40, rl.BLACK)
-        rl.draw_text(f"X: {player.locsize.x // TILE_SIZE}, Y: {player.locsize.y // TILE_SIZE}", window_size[0] - 200, 100, 30, rl.BLACK)
-
-        menu.render(player)
-
-        rl.draw_texture_pro(cursorTexture, rl.Rectangle(0,0,cursorTexture.width, cursorTexture.height), 
-                            rl.Rectangle(rl.get_mouse_position().x,rl.get_mouse_position().y,cursorTexture.width + 20, cursorTexture.height + 20), 
-                            rl.Vector2(0,0),
-                            0.0, 
-                            rl.WHITE)
-
-        raylib.EndDrawing()
+        render.draw_call(shared_memory, player_manger.all_players)
 
         # -------------Mechanics-------------------
-
         # Menu
-        menu.logic(player)
+        menu.logic(render)
         
         # Updating Player Stats
-        player.update(shared_memory)
+        player_manger.update_all_players_list(shared_memory)
 
-        # Gui/World Interaction
-        player.select(shared_memory)
+        input.select(shared_memory)
 
-        # Moving and Colliding Player
-        player.move(chunk_data, shared_memory)
+        input.move(render.chunk_data, shared_memory)
+
+        # # Gui/World Interaction
+        # player.select(shared_memory)
+
+        # # Moving and Colliding Player
+        # player.move(render.chunk_data, shared_memory)
 
         if rl.get_screen_width() != window_size[0] or rl.get_screen_height() != window_size[1]:
             window_size[0] = rl.get_screen_width()
@@ -141,7 +123,7 @@ def main() -> int:
         username = input("Username: ")
         password = input("Password: ")
 
-        player = Player(0, 0, 500, username, window_size)
+        player = Player(0, 0, username)
         
         manager = multiprocessing.Manager()
         shared_memory = manager.dict()
@@ -180,8 +162,6 @@ def main() -> int:
     game_loop(player, shared_memory, window_size)
 
     communicationloop.join()
-
-
 
     return 0
 

@@ -127,15 +127,15 @@ class Menu:
         # for button in self.buttons:
         #     button.render()
 
-    def logic(self, player):
+    def logic(self, render):
 
         if not self.buttons[0].is_on:
             if raylib.GetMouseWheelMove() > 0: # and player.zoom < 1.5:
-                player.zoom += 0.1
-                player.camera.zoom = player.zoom
-            elif raylib.GetMouseWheelMove() < 0: # and player.zoom > 1.0:
-                player.zoom -= 0.1
-                player.camera.zoom = player.zoom
+                render.zoom += 0.1
+                render.camera.zoom = render.zoom
+            elif raylib.GetMouseWheelMove() < 0: # and render.zoom > 1.0:
+                render.zoom -= 0.1
+                render.camera.zoom = render.zoom
 
         if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_LEFT):
             mouse_coord = rl.get_mouse_position()
