@@ -69,19 +69,19 @@ def game_loop(player, shared_memory, window_size):
     menu = Menu.Menu(window_size, menu_textures)
     render = Render.Render(player, tiles, palm, player_textures, npc, cursorTexture, menu, window_size)
     input = GamePlayInput.GamePlayInput(player, render.camera)
-    player_manger = PlayerManager.PlayerManager(player)
+    player_manager = PlayerManager.PlayerManager(player)
 
     while not raylib.WindowShouldClose():
         # -------------Draw-------------------
 
-        render.draw_call(shared_memory, player_manger.all_players)
+        render.draw_call(shared_memory, player_manager.all_players)
 
         # -------------Mechanics-------------------
         # Menu
         menu.logic(render)
         
         # Updating Player Stats
-        player_manger.update_all_players_list(shared_memory)
+        player_manager.update_all_players_list(shared_memory)
 
         input.select(shared_memory)
 
@@ -99,14 +99,7 @@ def game_loop(player, shared_memory, window_size):
             player.camera.offset = rl.Vector2(window_size[0]/2 - player.locsize.width/2, window_size[1]/2)
 
         # updating my current coordinates to the server
-        shared_memory['player'] = {'x' : player.locsize.x,
-                               'y' : player.locsize.y,
-                               'nme' : player.name,
-                               'swim' : player.in_water,
-                               'angle' : player.angle,
-                                'ismoving' : player.is_moving,
-                                'animcntr' : player.animation_cntr,
-                               'action' : player.action}
+        shared_memory['player'] = player.updates
 
     shared_memory['running'] = False
 
@@ -127,14 +120,15 @@ def main() -> int:
         
         manager = multiprocessing.Manager()
         shared_memory = manager.dict()
-        shared_memory["player"] = {'x' : player.locsize.x,
-                                'y' : player.locsize.y,
-                                'nme' : username,
-                                'swim' : player.in_water,
-                                'angle' : player.angle,
-                                'ismoving' : player.is_moving,
-                                'animcntr' : player.animation_cntr,
-                                'action' : player.action}
+        shared_memory["player"] = player.updates
+        # shared_memory["player"] = {'x' : player.locsize.x,
+        #                         'y' : player.locsize.y,
+        #                         'nme' : username,
+        #                         'swim' : player.in_water,
+        #                         'angle' : player.angle,
+        #                         'ismoving' : player.is_moving,
+        #                         'animcntr' : player.animation_cntr,
+        #                         'action' : player.action}
         shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
         shared_memory["playersinfo"] = manager.list([{}])
         shared_memory["npcs"] = [{}]

@@ -19,8 +19,8 @@ class Render:
 
         self.zoom = 1.3
         self.camera = rl.Camera2D(
-            rl.Vector2(window_size[0]/2 - self.player.locsize.width/2, window_size[1]/2),  # Offset from the center of the screen
-            rl.Vector2(self.player.locsize.x, self.player.locsize.y),      # The target position in the world
+            rl.Vector2(window_size[0]/2 - PLAYER_WIDTH/2, window_size[1]/2),  # Offset from the center of the screen
+            rl.Vector2(self.player.updates['x'], self.player.updates['y']),      # The target position in the world
             0.0,                   # Camera rotation in degrees
             self.zoom                    # Camera zoom (1.0 is default)
         )
@@ -29,8 +29,8 @@ class Render:
 
     def draw_tiles(self):
         # Calculate player's chunk position
-        player_chunk_x = self.player.locsize.x // (CHUNK_SIZE * TILE_SIZE)
-        player_chunk_y = self.player.locsize.y // (CHUNK_SIZE * TILE_SIZE)
+        player_chunk_x = self.player.updates['x'] // (CHUNK_SIZE * TILE_SIZE)
+        player_chunk_y = self.player.updates['y'] // (CHUNK_SIZE * TILE_SIZE)
 
         # Determine visible chunk range
         chunk_x_start = player_chunk_x - NUM_CHUNKS // 2
@@ -228,14 +228,12 @@ class Render:
         # self.draw_players(shared_memory)
 
         # self.player.draw(self.player_textures)
-        for player in self.all_players:
-            player.draw(self.player_textures)
 
         raylib.EndMode2D()
 
         # 105 fps
         rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", self.window_size[0] - 180, 50, 40, rl.BLACK)
-        rl.draw_text(f"X: {self.player.locsize.x // TILE_SIZE}, Y: {self.player.locsize.y // TILE_SIZE}", self.window_size[0] - 200, 100, 30, rl.BLACK)
+        rl.draw_text(f"X: {self.player.updates['x'] // TILE_SIZE}, Y: {self.player.updates['x'] // TILE_SIZE}", self.window_size[0] - 200, 100, 30, rl.BLACK)
 
         self.menu.render(self.player)
 
