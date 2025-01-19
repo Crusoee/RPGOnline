@@ -153,6 +153,5 @@ def generate_palms(chunk_x, chunk_y):
             # palm_data.append(data)
             palm_data.append(Palm(data[0],data[1],direction,size))
 
-    palm_data.sort(key=lambda item: item.updates['y'])
     return palm_data
 

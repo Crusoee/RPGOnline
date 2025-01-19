@@ -28,7 +28,7 @@ class Render:
 
         self.all_players = [player]
 
-    def draw_tiles(self):
+    def draw_tiles(self, all_players):
         # Calculate player's chunk position
         player_chunk_x = self.player.updates['x'] // (CHUNK_SIZE * TILE_SIZE)
         player_chunk_y = self.player.updates['y'] // (CHUNK_SIZE * TILE_SIZE)
@@ -61,13 +61,18 @@ class Render:
 
         for chunk_y in range(int(chunk_y_start), int(chunk_y_end)):
             for chunk_x in range(int(chunk_x_start), int(chunk_x_end)):
-                for palm in self.chunk_data[chunk_x, chunk_y][2]:
-                    # rl.draw_texture_pro(self.palm_textures, rl.Rectangle(0,0,self.palm_textures.width * palm[2], self.palm_textures.height), 
-                    #                     rl.Rectangle(palm[0],palm[1],self.palm_textures.width * 2 * palm[3], self.palm_textures.height * 2 * palm[3]), 
-                    #                     rl.Vector2(0,0),
-                    #                     0.0, 
-                    #                     rl.WHITE)
-                    palm.draw(self.palm_textures)
+                if chunk_x == int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)) and chunk_y ==  int((self.player.updates['y'] - self.player.base.y) // (TILE_SIZE * CHUNK_SIZE)):
+                    chunk_objects = list(all_players.values()) + self.chunk_data[chunk_x, chunk_y][2]
+                else:
+                    chunk_objects = self.chunk_data[chunk_x, chunk_y][2]
+
+                chunk_objects.sort(key=lambda item: item.updates['y'])
+
+                for object in chunk_objects:
+                    if 'coord' in object.updates.keys():
+                        object.draw(self.player_textures)
+                    else:
+                        object.draw(self.palm_textures)
 
     def draw_npcs(self, shared_memory):
         for key, value in shared_memory['npcs'][0].items():
@@ -108,18 +113,14 @@ class Render:
         raylib.ClearBackground(rl.RAYWHITE)
         raylib.BeginMode2D(self.camera)
 
-        self.draw_tiles()
+        self.draw_tiles(all_players)
 
         self.draw_npcs(shared_memory)
 
         self.draw_highlight()
 
-        for name, player in all_players.items():
-            player.draw(self.player_textures)
-
-        # self.draw_players(shared_memory)
-
-        # self.player.draw(self.player_textures)
+        # for name, player in all_players.items():
+        #     player.draw(self.player_textures)
 
         raylib.EndMode2D()
 
