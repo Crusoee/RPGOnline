@@ -15,6 +15,7 @@ class Render:
         self.palm_textures = palm_textures
         self.player_textures = player_textures
         self.npc_textures = npc_textures
+        
         self.chunk_data = {}
 
         self.zoom = 1.3
@@ -60,149 +61,13 @@ class Render:
 
         for chunk_y in range(int(chunk_y_start), int(chunk_y_end)):
             for chunk_x in range(int(chunk_x_start), int(chunk_x_end)):
-
                 for palm in self.chunk_data[chunk_x, chunk_y][2]:
-                    rl.draw_texture_pro(self.palm_textures, rl.Rectangle(0,0,self.palm_textures.width * palm[2], self.palm_textures.height), 
-                                        rl.Rectangle(palm[0],palm[1],self.palm_textures.width * 2 * palm[3], self.palm_textures.height * 2 * palm[3]), 
-                                        rl.Vector2(0,0),
-                                        0.0, 
-                                        rl.WHITE)
-
-    def draw_players(self, shared_memory):
-        for key, value in shared_memory['playersupdate'][0].items():
-            if key == shared_memory['user']:
-                continue
-
-            try:
-                player = shared_memory['playersupdate'][0][key]
-                text_size = rl.measure_text_ex(self.player_textures["name_font"], player['nme'], 30, 0.0)
-                rl.draw_text_ex(self.player_textures["name_font"], player['nme'], rl.Vector2(int(player['x'] - (text_size.x / 2)  + PLAYER_WIDTH / 2), int(player['y'] - 80)), 40, 0.0, rl.BLACK)
-                
-                # Ensure health ratio is clamped between 0 and 1
-                health_ratio = max(0, min(1, shared_memory['playersinfo'][0][key]['hlth'] / shared_memory['playersinfo'][0][key]['mhlth']))
-                # Calculate base position for the health bar
-                base_x = int(player['x'] - 40 + PLAYER_WIDTH // 2)
-                base_y = int(player['y'] - 40)
-                # # Draw the health bar
-                # rl.draw_rectangle(base_x, base_y, 80, 20, rl.RED)  # Background
-                # rl.draw_rectangle(base_x, base_y, int(80 * health_ratio), 20, rl.GREEN)  # Health bar
-
-                rl.draw_texture_pro(self.player_textures["healthframe"], rl.Rectangle(0,0,self.player_textures["healthframe"].width, self.player_textures["healthframe"].height), 
-                            rl.Rectangle(base_x, base_y, 80, 20), 
-                            rl.Vector2(0,0),
-                            0.0, 
-                            rl.WHITE)
-                rl.draw_texture_pro(self.player_textures["healthbar"], rl.Rectangle(0,0,self.player_textures["healthbar"].width * health_ratio, self.player_textures["healthbar"].height), 
-                            rl.Rectangle(base_x, base_y, 80 * health_ratio, 20), 
-                            rl.Vector2(0,0),
-                            0.0, 
-                            rl.WHITE)
-
-                if player['swim'] == True:
-                    if player['ismoving']:
-                        if -135 < player['angle'] <= -45:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),0,256, 150), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,self.player_textures['player'].width/10, self.player_textures['player'].height/10 - 47), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if -45 < player['angle'] <= 45:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 3),256, 150), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,self.player_textures['player'].width/10, self.player_textures['player'].height/10 - 47), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if 45 < player['angle'] <= 135:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 1),256, 150), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,self.player_textures['player'].width/10, self.player_textures['player'].height/10 - 47), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if player['angle'] <= -135 or player['angle'] > 135:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 2),256, 150), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,self.player_textures['player'].width/10, self.player_textures['player'].height/10 - 47), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                    else:
-                        if -135 < player['angle'] <= -45:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((0),0,256, 150), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,self.player_textures['player'].width/10, self.player_textures['player'].height/10 - 47), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if -45 < player['angle'] <= 45:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((0),(256 * 3),256, 150), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,self.player_textures['player'].width/10, self.player_textures['player'].height/10 - 47), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if 45 < player['angle'] <= 135:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((0),(256 * 1),256, 150), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,self.player_textures['player'].width/10, self.player_textures['player'].height/10 - 47), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if player['angle'] <= -135 or player['angle'] > 135:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((0),(256 * 2),256, 150), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10 + 34,self.player_textures['player'].width/10, self.player_textures['player'].height/10 - 47), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                else:
-                    if player['ismoving']:
-                        if -135 < player['angle'] <= -45:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),0,256, 256), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10,self.player_textures['player'].width/10, self.player_textures['player'].height/10), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if -45 < player['angle'] <= 45:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 3),256, 256), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10,self.player_textures['player'].width/10, self.player_textures['player'].height/10), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if 45 < player['angle'] <= 135:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 1),256, 256), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10,self.player_textures['player'].width/10, self.player_textures['player'].height/10), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if player['angle'] <= -135 or player['angle'] > 135:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle((256 * math.floor(player['animcntr'])),(256 * 2),256, 256), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10,self.player_textures['player'].width/10, self.player_textures['player'].height/10), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                    else:
-                        if -135 < player['angle'] <= -45:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle(0,0,256, 256), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10,self.player_textures['player'].width/10, self.player_textures['player'].height/10), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if -45 < player['angle'] <= 45:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle(0,(256 * 3),256, 256), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10,self.player_textures['player'].width/10, self.player_textures['player'].height/10), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if 45 < player['angle'] <= 135:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle(0,(256 * 1),256, 256), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10,self.player_textures['player'].width/10, self.player_textures['player'].height/10), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-                        if player['angle'] <= -135 or player['angle'] > 135:
-                            rl.draw_texture_pro(self.player_textures['player'], rl.Rectangle(0,(256 * 2),256, 256), 
-                                                rl.Rectangle(player['x'] - 31,player['y'] - 10,self.player_textures['player'].width/10, self.player_textures['player'].height/10), 
-                                                rl.Vector2(0,0),
-                                                0.0, 
-                                                rl.WHITE)
-
-            except KeyError as e:
-                print("Error Occurred in draw_players: ", e)
+                    # rl.draw_texture_pro(self.palm_textures, rl.Rectangle(0,0,self.palm_textures.width * palm[2], self.palm_textures.height), 
+                    #                     rl.Rectangle(palm[0],palm[1],self.palm_textures.width * 2 * palm[3], self.palm_textures.height * 2 * palm[3]), 
+                    #                     rl.Vector2(0,0),
+                    #                     0.0, 
+                    #                     rl.WHITE)
+                    palm.draw(self.palm_textures)
 
     def draw_npcs(self, shared_memory):
         for key, value in shared_memory['npcs'][0].items():
@@ -212,7 +77,32 @@ class Render:
             except (KeyError) as e:
                 print("Error: ", e)
 
-    def draw_call(self, shared_memory, player_manager):
+    def draw_highlight(self):
+        if self.player.updates['coord'] != None and self.player.updates['isattacking'] == False:
+            # raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
+            # rl.draw_texture(textures["click"],int(self.coordinate.x), int(self.coordinate.y),rl.YELLOW)
+            shrink_factor = 0.2  # For example, shrink to 50% of original size
+
+            # Calculate new width and height after shrinking
+            new_width = self.player_textures["click"].width * shrink_factor
+            new_height = self.player_textures["click"].height * shrink_factor
+
+            # Center the destination rectangle
+            rl.draw_texture_pro(
+                self.player_textures["click"], 
+                rl.Rectangle(0, 0, self.player_textures["click"].width, self.player_textures["click"].height),  # Full source rectangle
+                rl.Rectangle(
+                    int(self.player.updates['coord'][0]) - new_width / 2, 
+                    int(self.player.updates['coord'][1]) - new_height / 2, 
+                    new_width, 
+                    new_height
+                ), 
+                rl.Vector2(0, 0),  # Origin for rotation
+                0.0, 
+                rl.Color(255,255,255,255)
+            )
+
+    def draw_call(self, shared_memory, all_players):
 
         raylib.BeginDrawing()
         raylib.ClearBackground(rl.RAYWHITE)
@@ -222,7 +112,9 @@ class Render:
 
         self.draw_npcs(shared_memory)
 
-        for name, player in player_manager.items():
+        self.draw_highlight()
+
+        for name, player in all_players.items():
             player.draw(self.player_textures)
 
         # self.draw_players(shared_memory)

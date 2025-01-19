@@ -66,14 +66,16 @@ def game_loop(player, shared_memory, window_size):
     palm = rl.load_texture("Textures\Environment\palmtree.png")
 
     # Instances
+    player_manager = PlayerManager.PlayerManager(player)
     menu = Menu.Menu(window_size, menu_textures)
     render = Render.Render(player, tiles, palm, player_textures, npc, cursorTexture, menu, window_size)
     input = GamePlayInput.GamePlayInput(player, render.camera)
-    player_manager = PlayerManager.PlayerManager(player)
 
     while not raylib.WindowShouldClose():
-        # -------------Draw-------------------
+
         player_manager.sort_players()
+        
+        # -------------Draw-------------------
 
         render.draw_call(shared_memory, player_manager.all_players)
 
@@ -84,9 +86,7 @@ def game_loop(player, shared_memory, window_size):
         # Updating Player Stats
         player_manager.update_all_players_list(shared_memory)
 
-        input.select(shared_memory)
-
-        input.move(render.chunk_data, shared_memory)
+        input.GamePlayInput_call(render.chunk_data, shared_memory)
 
         player_manager.move_players()
 

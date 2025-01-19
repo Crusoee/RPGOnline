@@ -111,7 +111,7 @@ class GamePlayInput():
         self.camera.target.x = self.player.updates['x']
         self.camera.target.y = self.player.updates['y']
 
-        # self.player.collision(chunk_data[int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)), int((self.player.updates['y'] - self.player.base.y) // (TILE_SIZE * CHUNK_SIZE))][1])
+        # self.collision(chunk_data[int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)), int((self.player.updates['y'] - self.player.base.y) // (TILE_SIZE * CHUNK_SIZE))][1])
 
     def select(self, shared_memory):
 
@@ -164,5 +164,10 @@ class GamePlayInput():
                 if raylib.CheckCollisionPointRec(rl.Vector2(select_coordinate[0], select_coordinate[1]), select_player(shared_memory['playersupdate'][0][key])):
                     print(player)
 
-    def GamePlayInput_call(self):
-        ...
+    def GamePlayInput_call(self, chunk_data, shared_memory):
+
+        self.select(shared_memory)
+
+        self.move(chunk_data, shared_memory)
+
+        # self.collision(chunk_data[int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)), int((self.player.updates['y'] - self.player.base.y) // (TILE_SIZE * CHUNK_SIZE))][1])

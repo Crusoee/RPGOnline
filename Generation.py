@@ -6,6 +6,8 @@ import random
 import pyray as rl
 import raylib as raylib
 
+from Object import Palm
+
 # # Parameters for the Perlin noise
 # width = 100   # Width of the tilemap
 # height = 100  # Height of the tilemap
@@ -142,12 +144,15 @@ def generate_terrain_chunk(chunk_x, chunk_y):
 def generate_palms(chunk_x, chunk_y):
     random.seed(cantor_pairing(chunk_x, chunk_y))
     amount = random.randint(5,15)
-    direction = random.choice([-1,1])
-    size = random.choice([.75,.8,1,1,1,1,1.2,1.2,1.5,1.7])
     palm_data = []
     for i in range(amount):
+        direction = random.choice([-1,1])
+        size = random.choice([.75,.8,1,1,1,1,1.2,1.2,1.5,1.7])
         data = (random.randint(chunk_x * CHUNK_SIZE * 64, (chunk_x + 1) * CHUNK_SIZE * 64), random.randint(chunk_y * CHUNK_SIZE * 64, (chunk_y + 1) * CHUNK_SIZE * 64), direction, size)
         if simplex_noise(data[0] // 64, data[1] // 64) > shallow:
-            palm_data.append(data)
+            # palm_data.append(data)
+            palm_data.append(Palm(data[0],data[1],direction,size))
+
+    palm_data.sort(key=lambda item: item.updates['y'])
     return palm_data
 

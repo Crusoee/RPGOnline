@@ -111,36 +111,6 @@ class Player():
 
     def draw(self, textures):
 
-        if self.updates['coord'] != None and self.updates['isattacking'] == False:
-            # raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
-            # rl.draw_texture(textures["click"],int(self.coordinate.x), int(self.coordinate.y),rl.YELLOW)
-            shrink_factor = 0.2  # For example, shrink to 50% of original size
-
-            # Calculate new width and height after shrinking
-            new_width = textures["click"].width * shrink_factor
-            new_height = textures["click"].height * shrink_factor
-
-            # Center the destination rectangle
-            rl.draw_texture_pro(
-                textures["click"], 
-                rl.Rectangle(0, 0, textures["click"].width, textures["click"].height),  # Full source rectangle
-                rl.Rectangle(
-                    int(self.updates['coord'][0]) - new_width / 2, 
-                    int(self.updates['coord'][1]) - new_height / 2, 
-                    new_width, 
-                    new_height
-                ), 
-                rl.Vector2(0, 0),  # Origin for rotation
-                0.0, 
-                rl.Color(255,255,255,255)
-            )
-
-        # raylib.DrawRectangleRec(self.prev_locsize, rl.BROWN)
-        # if self.in_water:
-        #     raylib.DrawRectangleRec(rl.Rectangle(self.updates['x'],self.updates['y'] + PLAYER_HEIGHT / 2,PLAYER_WIDTH,PLAYER_HEIGHT / 2), self.color)
-        # else:
-        # raylib.DrawRectangleRec(self.locsize, self.color)
-
         if self.animcntr <= -4:
             self.animcntr = 0
 
@@ -316,6 +286,7 @@ class Player():
             self.player.updates['swim'] = False
 
     def move(self):
+
         # moving depending on if there is a updates['coord'] to follow
         if self.updates['coord'] != None and self.updates['canmove']:
             self.animcntr -= rl.get_frame_time() * (self.stats['speed'] / 25 * self.stats['hinderedspeedmult'])
