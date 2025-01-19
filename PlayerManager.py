@@ -14,8 +14,14 @@ class PlayerManager:
             for name, player in self.all_players.items():
                 player.stats = shared_memory['playersinfo'][0][name]
                 if name in shared_memory['playersupdate'][0].keys() and name != self.player.updates['nme']:
-                    player.updates['x'] = shared_memory['playersupdate'][0][name]['x']
-                    player.updates['y'] = shared_memory['playersupdate'][0][name]['y']
+                    player.updates = shared_memory['playersupdate'][0][name]
         except KeyError as e:
             self.all_players.pop(name)
+
+    def move_players(self):
+        for name, player in self.all_players.items():
+            player.move()
+
+    def sort_players(self):
+        self.all_players = dict(sorted(self.all_players.items(), key=lambda item: item[1].updates['y']))
             

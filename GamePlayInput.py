@@ -68,13 +68,13 @@ class GamePlayInput():
             target_distance = distance(self.player.updates['x'],self.player.updates['y'], player['x'],player['y'])
             if target_distance < self.player.stats['attackingdist']:
                 self.player.updates['action']['type'] = 'attack'
-                self.player.coordinate = None
+                self.player.updates['coord'] = None
             elif target_distance > self.player.stats['trackingdist']:
                 self.player.updates['action'] = EMPTY
                 self.attacking = False
             else:
                 self.player.updates['action']['type'] = None
-                self.player.coordinate = rl.Vector2(player['x'] - self.player.base.x, 
+                self.player.updates['coord'] = (player['x'] - self.player.base.x, 
                                             player['y'] - self.player.base.y)
         # If there's an NPC target, follow it
         elif self.player.updates['action']['target'] in shared_memory['npcs'][0].keys():
@@ -83,39 +83,26 @@ class GamePlayInput():
             target_distance = distance(self.player.updates['x'],self.player.updates['y'], self.player.updates['action']['x'],self.player.updates['action']['y'])
             if target_distance < self.player.stats['attackingdist']:
                 self.player.updates['action']['type'] = 'attacknpc'
-                self.player.coordinate = None
+                self.player.updates['coord'] = None
             elif target_distance > self.player.stats['trackingdist']:
                 self.player.updates['action'] = EMPTY
                 self.attacking = False
             else:
                 self.player.updates['action']['type'] = None
-                self.player.coordinate = rl.Vector2(self.player.updates['action']['x'] + shared_memory['npcs'][0][self.player.updates['action']['target']].size // 2,self.player.updates['action']['y'] + shared_memory['npcs'][0][self.player.updates['action']['target']].size // 2)            
+                self.player.updates['coord'] = (self.player.updates['action']['x'] + shared_memory['npcs'][0][self.player.updates['action']['target']].size // 2,self.player.updates['action']['y'] + shared_memory['npcs'][0][self.player.updates['action']['target']].size // 2)            
         else:
             self.player.updates['action'] = EMPTY
 
 
-        # If you press the right mouse button, set coordinate to that location to move
+        # If you press the right mouse button, set updates['coord'] to that location to move
         if raylib.IsMouseButtonDown(raylib.MOUSE_BUTTON_RIGHT) and not self.player.updates['action']['target']:
+            # if self.player.updates['coord']:
+            #     self.player.updates['angle'] = math.degrees(math.atan2(-(self.player.updates['coord'][1] - self.player.updates['y'] + self.player.base.y), (self.player.updates['coord'][0] - self.player.updates['x'] + self.player.base.x)))
             mouse_position_window = rl.get_mouse_position()
-            self.player.coordinate = rl.Vector2(
+            self.player.updates['coord'] = (
                 (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
                 (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
             )
-        
-        # moving depending on if there is a coordinate to follow
-        if self.player.coordinate != None and self.player.updates['canmove']:
-            self.player.is_moving = True
-            displaced = rl.Vector2(self.player.coordinate.x - self.player.updates['x'] + self.player.base.x, self.player.coordinate.y - self.player.updates['y'] + self.player.base.y)
-            length = math.sqrt(displaced.x**2 + displaced.y**2)
-            if length != 0:
-                dir_vec = rl.Vector2(displaced.x / length, displaced.y / length)
-                self.player.updates['x'] += dir_vec.x * self.speed * raylib.GetFrameTime()
-                self.player.updates['y'] += dir_vec.y * self.speed * raylib.GetFrameTime()
-                if length < 150.0 * raylib.GetFrameTime():
-                    self.player.coordinate = None
-        else:
-            self.player.is_moving = False
-
 
         if raylib.IsKeyPressed(raylib.KEY_V):
             self.player.respawn.x = self.player.updates['x']
@@ -129,9 +116,10 @@ class GamePlayInput():
     def select(self, shared_memory):
 
         if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_RIGHT):
-            
+            # if self.player.updates['coord']:
+            #     self.player.updates['angle'] = math.degrees(math.atan2(-(self.player.updates['coord'][1] - self.player.updates['y'] + self.player.base.y), (self.player.updates['coord'][0] - self.player.updates['x'] + self.player.base.x)))
             mouse_position_window = rl.get_mouse_position()
-            select_coordinate = rl.Vector2(
+            select_coordinate = (
                 (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
                 (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
             )
@@ -142,13 +130,13 @@ class GamePlayInput():
 
                 player = shared_memory['playersupdate'][0][key]
 
-                if raylib.CheckCollisionPointRec(select_coordinate, select_player(player)):
+                if raylib.CheckCollisionPointRec(rl.Vector2(select_coordinate[0], select_coordinate[1]), select_player(player)):
                     self.player.updates['action']['target'] = key
                     return
                 
             for key, value in shared_memory['npcs'][0].items():
                 npc = shared_memory['npcs'][0][key]
-                if raylib.CheckCollisionPointRec(select_coordinate, rl.Rectangle(npc.x,npc.y,npc.size,npc.size)):
+                if raylib.CheckCollisionPointRec(rl.Vector2(select_coordinate[0], select_coordinate[1]), rl.Rectangle(npc.x,npc.y,npc.size,npc.size)):
                     self.player.updates['action']['target'] = f"{npc.x}{npc.y}"
                     self.player.updates['action']['x'] = npc.x
                     self.player.updates['action']['y'] = npc.y
@@ -162,7 +150,7 @@ class GamePlayInput():
 
         if raylib.IsMouseButtonPressed(raylib.MOUSE_BUTTON_LEFT):
             mouse_position_window = rl.get_mouse_position()
-            select_coordinate = rl.Vector2(
+            select_coordinate = (
                 (mouse_position_window.x - self.camera.offset.x) / self.camera.zoom + self.camera.target.x,
                 (mouse_position_window.y - self.camera.offset.y) / self.camera.zoom + self.camera.target.y
             )
@@ -173,7 +161,7 @@ class GamePlayInput():
 
                 player = shared_memory['playersinfo'][0][key]
 
-                if raylib.CheckCollisionPointRec(select_coordinate, select_player(shared_memory['playersupdate'][0][key])):
+                if raylib.CheckCollisionPointRec(rl.Vector2(select_coordinate[0], select_coordinate[1]), select_player(shared_memory['playersupdate'][0][key])):
                     print(player)
 
     def GamePlayInput_call(self):

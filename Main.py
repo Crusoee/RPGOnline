@@ -73,6 +73,7 @@ def game_loop(player, shared_memory, window_size):
 
     while not raylib.WindowShouldClose():
         # -------------Draw-------------------
+        player_manager.sort_players()
 
         render.draw_call(shared_memory, player_manager.all_players)
 
@@ -86,6 +87,8 @@ def game_loop(player, shared_memory, window_size):
         input.select(shared_memory)
 
         input.move(render.chunk_data, shared_memory)
+
+        player_manager.move_players()
 
         # # Gui/World Interaction
         # player.select(shared_memory)

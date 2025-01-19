@@ -263,7 +263,6 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
                 print("tickrate longer", elapsed)
         except (TimeoutError, EOFError, KeyError) as e:
             print(f"Error processing data!", traceback.format_exc())
-            print(e)
             # print(len(client_stats), client_stats.keys())
         except (ConnectionAbortedError, ConnectionResetError) as e:
             del client_data[addr]
@@ -271,6 +270,7 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
             del client_con[addr]
         except Exception as e:
             print(traceback.format_exc())
+            print(client_data)
 
 async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, client_data, client_stats_lock, action_queue, client_stats, client_con):
     # print(f"Connection with {addr[0]} on port {addr[1]} started...")
@@ -290,13 +290,24 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
     # Client updates to server
     updates = {
-                'x' : 0,
-                'y' : 0,
-                'nme' : '',
-                'swim' : False,
-                'angle' : -90,
-                'ismoving' : 0
-            }
+                    'x' : 0,
+                    'y' : 0,
+                    'coord' : None,
+                    'nme' : '',
+                    'swim' : False,
+                    # 'angle' : -90,
+                    'ismoving' : False,
+                    'isattacking' : False, 
+                    # 'animcntr' : 0,
+                    'canmove' : True,
+
+                    'action' : {
+                            'type' : None,
+                            'target' :None,
+                            'x' : None,
+                            'y' : None,
+                        }
+                }
 
     # Player info sent to clients
     info = {
@@ -444,22 +455,13 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
             if updates in [0, None]:
                 break
 
-            # Stats that the server trusts from the client
-            info['x'] = updates[0]['x']
-            info['y'] = updates[0]['y']
-            info['nme'] = updates[0]['nme']
-            info['swim'] = updates[0]['swim']
-            info['angle'] = updates[0]['angle']
-            info['ismoving'] = updates[0]['ismoving']
-            info['animcntr'] = updates[0]['animcntr']
-
             # If an action is created by the client, add it to the queue
             if updates[0]['action']['type'] != None and client_stats[username]['hlth'] > 0:
                 updates[0]['action']['initiator'] = username
                 action_queue.put(updates[0]['action'])
 
             # Finally, update the client_data dict
-            client_data[username] = info
+            client_data[username] = updates[0]
 
         except (TimeoutError, KeyError, ConnectionResetError) as e:
             print(f"Error processing data from {username}: {traceback.format_exc()}")
