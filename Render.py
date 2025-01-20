@@ -90,7 +90,7 @@ class Render:
                 print("Error: ", e)
 
     def draw_highlight(self):
-        if self.player.updates['coord'] != None and self.player.updates['isattacking'] == False:
+        if self.player.updates['coord'] != None:
             # raylib.DrawCircle(int(self.coordinate.x), int(self.coordinate.y), 5.0, rl.YELLOW)
             # rl.draw_texture(textures["click"],int(self.coordinate.x), int(self.coordinate.y),rl.YELLOW)
             shrink_factor = 0.2  # For example, shrink to 50% of original size

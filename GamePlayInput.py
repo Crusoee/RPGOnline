@@ -45,20 +45,8 @@ class GamePlayInput():
         
         # If your health is 0, respawn: NEEDS TO BE EXPOUNDED
         if self.player.stats['hlth'] <= 0:
-            self.player.updates['x'] = self.respawn.x
-            self.player.updates['y'] = self.respawn.y
-
-        # The current noise level your character is standing on
-        value = simplex_noise((self.player.updates['x'] - self.player.base.x) // TILE_SIZE, 
-                        (self.player.updates['y'] - self.player.base.y) // TILE_SIZE)
-
-        # Changing the speed of your player depending on what terrain their standing on
-        if value < Generation.water:
-            self.speed = self.player.stats['swmspeed'] * self.player.stats['hinderedspeedmult']
-            self.player.updates['swim'] = True
-        else:
-            self.speed = self.player.stats['speed'] * self.player.stats['hinderedspeedmult']
-            self.player.updates['swim'] = False
+            self.player.updates['x'] = self.player.respawn.x
+            self.player.updates['y'] = self.player.respawn.y
 
         # If there's a player target, follow it
         if self.player.updates['action']['target'] in shared_memory['playersupdate'][0].keys():

@@ -72,14 +72,12 @@ def game_loop(player, shared_memory, window_size):
     input = GamePlayInput.GamePlayInput(player, render.camera)
 
     while not raylib.WindowShouldClose():
-
-        # player_manager.sort_players()
-        
         # -------------Draw-------------------
 
         render.draw_call(shared_memory, player_manager.all_players)
 
         # -------------Mechanics-------------------
+
         # Menu
         menu.logic(render)
         
@@ -89,12 +87,6 @@ def game_loop(player, shared_memory, window_size):
         input.GamePlayInput_call(render.chunk_data, shared_memory)
 
         player_manager.move_players()
-
-        # # Gui/World Interaction
-        # player.select(shared_memory)
-
-        # # Moving and Colliding Player
-        # player.move(render.chunk_data, shared_memory)
 
         if rl.get_screen_width() != window_size[0] or rl.get_screen_height() != window_size[1]:
             window_size[0] = rl.get_screen_width()
@@ -114,24 +106,17 @@ def main() -> int:
         800
     ]
     
+    # Logging in or creating account
     while True:
         intent = input("Login (0) or Create an Account (1)")
         username = input("Username: ")
         password = input("Password: ")
 
-        player = Player(0, 0, username)
+        player = Player(69, -12, username)
         
         manager = multiprocessing.Manager()
         shared_memory = manager.dict()
         shared_memory["player"] = player.updates
-        # shared_memory["player"] = {'x' : player.locsize.x,
-        #                         'y' : player.locsize.y,
-        #                         'nme' : username,
-        #                         'swim' : player.in_water,
-        #                         'angle' : player.angle,
-        #                         'ismoving' : player.is_moving,
-        #                         'animcntr' : player.animation_cntr,
-        #                         'action' : player.action}
         shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
         shared_memory["playersinfo"] = manager.list([{}])
         shared_memory["npcs"] = [{}]

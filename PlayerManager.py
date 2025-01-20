@@ -9,12 +9,20 @@ class PlayerManager:
         for key, value in shared_memory['playersupdate'][0].items():
             if key not in self.all_players.keys():
                 self.all_players[key] = Player(shared_memory['playersupdate'][0][key]['x'],shared_memory['playersupdate'][0][key]['y'],key)
+                self.all_players[key].updates = shared_memory['playersupdate'][0][key]
 
         try:
             for name, player in self.all_players.items():
                 player.stats = shared_memory['playersinfo'][0][name]
                 if name in shared_memory['playersupdate'][0].keys() and name != self.player.updates['nme']:
-                    player.updates = shared_memory['playersupdate'][0][name]
+                    # player.updates = shared_memory['playersupdate'][0][name]
+                    
+                    player.updates['coord'] = shared_memory['playersupdate'][0][name]['coord']
+                    # player.updates['ismoving'] = shared_memory['playersupdate'][0][name]['ismoving']
+                    # player.updates['swim'] = shared_memory['playersupdate'][0][name]['swim']
+                    # player.updates['nme'] = shared_memory['playersupdate'][0][name]['nme']
+                    # player.updates['action'] = shared_memory['playersupdate'][0][name]['action']
+                    
         except KeyError as e:
             self.all_players.pop(name)
 

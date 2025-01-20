@@ -218,8 +218,7 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
                     if client_stats[addr]['hlth'] > client_stats[addr]['mhlth']:
                         client_stats[addr]['hlth'] = client_stats[addr]['mhlth']
 
-                # Energy Regeneration NEEDS A LOCK
-                # with client_data_lock:
+                # Energy Regeneration
                 if client_data[addr]['swim'] == True:
                     if client_stats[addr]['energyconsumptionratecntr'] >= client_stats[addr]['energyconsumptionrate']:
                         if client_stats[addr]['energy'] <= 0:
