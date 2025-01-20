@@ -8,36 +8,53 @@ import raylib as raylib
 
 from Object import Palm
 
-# # Parameters for the Perlin noise
-# width = 100   # Width of the tilemap
-# height = 100  # Height of the tilemap
-# scale = 100.0  # Scale of the noise
-# octaves = 6    # Number of layers of noise (more octaves = more detail)
-# persistence = 0.5  # Persistence of noise (controls roughness)
-# lacunarity = 2.0   # Lacunarity of noise (controls frequency)
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import BoundaryNorm, ListedColormap
 
-# def generate_landscape():
+# water = -.1
+# shallow = 0
+# sand = 0.1
+# grass = 0.3
+# forest = 0.48
+# rocks = None
 
-#     # Generate a 2D array of Perlin noise values
-#     terrain_map = np.zeros((height, width))
+water = 0.4
+shallow = 0.45
+sand = 0.5
+grass = 0.6
+forest = 0.8
+rocks = 1
 
-#     for y in range(height):
-#         for x in range(width):
-#             terrain_map[y][x] = noise.pnoise2(
-#                 x / scale, 
-#                 y / scale, 
-#                 octaves=octaves, 
-#                 persistence=persistence, 
-#                 lacunarity=lacunarity, 
-#                 repeatx=1024, 
-#                 repeaty=1024, 
-#                 base=42
-#             )
+def show_landscape(terrain_map):
+    # Define thresholds and corresponding colors
+    thresholds = [0, water, shallow, sand, grass, forest, rocks]  # Example thresholds
+    colors = ['blue', 'blue', 'cyan', 'yellow', 'green', 'orange', 'red']  # Colors for each range
 
-#     # Normalize the terrain values to be between 0 and 1
-#     terrain_map = (terrain_map - np.min(terrain_map)) / (np.max(terrain_map) - np.min(terrain_map))
+    # Create a colormap and norm
+    cmap = ListedColormap(colors)
+    norm = BoundaryNorm(thresholds, ncolors=len(colors), clip=True)
 
-#     return terrain_map
+    # Visualize the terrain with the custom colormap
+    plt.imshow(terrain_map, cmap=cmap, norm=norm)
+    plt.colorbar(ticks=thresholds, label="Height")
+    plt.title("2D Perlin Noise Terrain Map")
+    plt.show()
+
+
+def generate_landscape(start_x, start_y, width, height):
+
+    # Generate a 2D array of Perlin noise values
+    terrain_map = np.zeros((height, width))
+
+    for y in range(height):
+        for x in range(width):
+            terrain_map[y][x] = simplex_noise(x + start_x, y + start_y)
+
+    # Normalize the terrain values to be between 0 and 1
+    terrain_map = (terrain_map - np.min(terrain_map)) / (np.max(terrain_map) - np.min(terrain_map))
+
+    return terrain_map
 
 # def show_landscape(terrain_map):
 
@@ -47,18 +64,8 @@ from Object import Palm
 #     plt.title("2D Perlin Noise Terrain Map")
 #     plt.show()
 
-water = -.1
-shallow = 0
-sand = 0.1
-grass = 0.3
-forest = 0.48
-rocks = None
-
-
-
 # Function to generate Perlin noise at given coordinates
 # x, y, scale=75.0, octaves=4, persistence=.3, lacunarity=2.0, seed=2
-
 
 def get_tile_texture(value, tiles):
     if value < water:
@@ -155,3 +162,4 @@ def generate_palms(chunk_x, chunk_y):
 
     return palm_data
 
+# show_landscape(generate_landscape(-24, -24, 24, 24))

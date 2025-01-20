@@ -133,7 +133,7 @@ class Render:
 
         # 105 fps
         rl.draw_text(f"fps: {1 / (raylib.GetFrameTime() + .00000000001)}", self.window_size[0] - 180, 50, 40, rl.BLACK)
-        rl.draw_text(f"X: {self.player.updates['x'] // TILE_SIZE}, Y: {self.player.updates['x'] // TILE_SIZE}", self.window_size[0] - 200, 100, 30, rl.BLACK)
+        rl.draw_text(f"X: {self.player.updates['x'] // TILE_SIZE}, Y: {self.player.updates['y'] // TILE_SIZE}", self.window_size[0] - 300, 100, 30, rl.BLACK)
 
         self.menu.render(self.player)
 

@@ -9,9 +9,9 @@ import json
 
 import asyncio
 import aiofiles
-# import copy
 
 from NPC import NPC
+import Player
 
 # Constants
 HOST = "0.0.0.0"
@@ -288,81 +288,13 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
     loop = asyncio.get_event_loop()
 
-    # Client updates to server
-    updates = {
-                    'x' : 0,
-                    'y' : 0,
-                    'coord' : None,
-                    'nme' : '',
-                    'swim' : False,
-                    # 'angle' : -90,
-                    'ismoving' : False,
-                    'isattacking' : False, 
-                    # 'animcntr' : 0,
-                    'canmove' : True,
+    player_instance = Player.Player(0,0,'')
 
-                    'action' : {
-                            'type' : None,
-                            'target' :None,
-                            'x' : None,
-                            'y' : None,
-                        }
-                }
+    # Client updates to server
+    updates = player_instance.updates
 
     # Player info sent to clients
-    info = {
-                'dmg' : 10,
-                'lifesteal' : 0,
-                'poison' : 0,
-
-                'crit' : 1.1,
-                'chance' : 50,
-
-                'mgcdamage' : 18,
-                'maxmgc' : 500,
-                'mgc' : 500,
-                'mgcregen' : 90,
-                'mgcregenbonus' : 1,
-                'mgcctnr' : 0,
-                'mgcheal' : 5,
-                'mgcburn' : 0.1,
-
-                'arm' : 0,
-                'thorns' : 0,
-
-                'hlth' : 100,
-                'mhlth' : 100,
-                'regens' : 60,
-                'regencntr' : 0,
-                'regenbonus' : 1,
-
-                'atc' : 30,
-                'ats' : 30,
-
-                'ress' : 300,
-                'rescntr' : 0,
-
-                'hinderedspeedmult' : 1,
-
-                'speed' : 130,
-                'swmspeed' : 65,
-
-                'killcount' : 0,
-
-                'attackingdist' : 50,
-                'trackingdist' : 800,
-
-                'maxenergy' : 100,
-                'energy' : 100,
-                'energyregen' : 120,
-                'energycntr' : 0,
-                'energyregenbonus' : 10,
-
-                'energyconsumption' : 20,
-                'energyconsumptionrate' : 30,
-                'energyconsumptionratecntr' : 0,
-                'lowenergyspeed' : 0.5,
-            }
+    info = player_instance.stats
     
     """
     LOGIN...

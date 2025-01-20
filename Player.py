@@ -10,25 +10,8 @@ from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, PLAYER
 class Player():
     def __init__(self, x, y, name):
 
-        # self.updates['nme'] = name
-
-        # pixel_coordx = x
-        # pixel_coordy = y
-
-        # self.speed = 500
-
-        # self.angle = -90
-        # self.animation_cntr = 0
-
-        # self.attacking = False
-        # self.is_moving = False
-        # self.in_water = False
-
-
-        # self.locsize = rl.Rectangle(pixel_coordx, pixel_coordy, PLAYER_WIDTH, PLAYER_HEIGHT)
-
-        # self.coordinate = None
-        # self.can_move = True
+        x *= 64
+        y *= 64
 
         self.angle = -90
         self.animcntr = 0
