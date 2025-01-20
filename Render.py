@@ -30,8 +30,8 @@ class Render:
 
     def draw_tiles(self, all_players):
         # Calculate player's chunk position
-        player_chunk_x = self.player.updates['x'] // (CHUNK_SIZE * TILE_SIZE)
-        player_chunk_y = self.player.updates['y'] // (CHUNK_SIZE * TILE_SIZE)
+        player_chunk_x = int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE))
+        player_chunk_y = int((self.player.updates['y'] - self.player.base.y) // (TILE_SIZE * CHUNK_SIZE))
 
         # Determine visible chunk range
         chunk_x_start = player_chunk_x - NUM_CHUNKS // 2
@@ -59,10 +59,17 @@ class Render:
                         tile_draw_y = (chunk_y * CHUNK_SIZE + y) * TILE_SIZE
                         rl.draw_texture(tile_texture, tile_draw_x, tile_draw_y, rl.WHITE)
 
+        self.chunk_data = dict(sorted(self.chunk_data.items(), key=lambda item: item[0][1]))
+
+        skip_chunk_left = int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)) -1
+        skip_chunk_right = int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)) +1
+
         for chunk_y in range(int(chunk_y_start), int(chunk_y_end)):
             for chunk_x in range(int(chunk_x_start), int(chunk_x_end)):
-                if chunk_x == int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)) and chunk_y ==  int((self.player.updates['y'] - self.player.base.y) // (TILE_SIZE * CHUNK_SIZE)):
-                    chunk_objects = list(all_players.values()) + self.chunk_data[chunk_x, chunk_y][2]
+                if (chunk_x == skip_chunk_left or chunk_x == skip_chunk_right) and chunk_y == player_chunk_y:
+                    continue
+                elif chunk_x == player_chunk_x and chunk_y == player_chunk_y:
+                    chunk_objects = list(all_players.values()) + self.chunk_data[chunk_x, chunk_y][2] + self.chunk_data[skip_chunk_left, chunk_y][2] + self.chunk_data[skip_chunk_right, chunk_y][2]
                 else:
                     chunk_objects = self.chunk_data[chunk_x, chunk_y][2]
 

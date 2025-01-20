@@ -73,7 +73,7 @@ def game_loop(player, shared_memory, window_size):
 
     while not raylib.WindowShouldClose():
 
-        player_manager.sort_players()
+        # player_manager.sort_players()
         
         # -------------Draw-------------------
 
@@ -99,7 +99,7 @@ def game_loop(player, shared_memory, window_size):
         if rl.get_screen_width() != window_size[0] or rl.get_screen_height() != window_size[1]:
             window_size[0] = rl.get_screen_width()
             window_size[1] = rl.get_screen_height()
-            player.camera.offset = rl.Vector2(window_size[0]/2 - player.locsize.width/2, window_size[1]/2)
+            render.camera.offset = rl.Vector2(window_size[0]/2 - PLAYER_WIDTH/2, window_size[1]/2)
 
         # updating my current coordinates to the server
         shared_memory['player'] = player.updates
