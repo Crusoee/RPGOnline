@@ -96,9 +96,6 @@ class GamePlayInput():
             self.player.respawn.x = self.player.updates['x']
             self.player.respawn.y = self.player.updates['y']
 
-        self.camera.target.x = self.player.updates['x']
-        self.camera.target.y = self.player.updates['y']
-
         # self.collision(chunk_data[int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)), int((self.player.updates['y'] - self.player.base.y) // (TILE_SIZE * CHUNK_SIZE))][1])
 
     def select(self, shared_memory):

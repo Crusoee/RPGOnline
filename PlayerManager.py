@@ -10,18 +10,21 @@ class PlayerManager:
             if key not in self.all_players.keys():
                 self.all_players[key] = Player(shared_memory['playersupdate'][0][key]['x'],shared_memory['playersupdate'][0][key]['y'],key)
                 self.all_players[key].updates = shared_memory['playersupdate'][0][key]
+                self.all_players[key].stats = shared_memory['playersinfo'][0][key]
 
         try:
             for name, player in self.all_players.items():
+                # for stat in shared_memory['playersinfo'][0][name].keys():
+                #     player.stats[stat] = shared_memory['playersinfo'][0][name][stat]
+
                 player.stats = shared_memory['playersinfo'][0][name]
+
                 if name in shared_memory['playersupdate'][0].keys() and name != self.player.updates['nme']:
-                    # player.updates = shared_memory['playersupdate'][0][name]
-                    
+                    # for update in shared_memory['playersupdate'][0][name].keys():
+                    #     player.updates[update] = shared_memory['playersupdate'][0][name][update]
+                    #     ...
+
                     player.updates['coord'] = shared_memory['playersupdate'][0][name]['coord']
-                    # player.updates['ismoving'] = shared_memory['playersupdate'][0][name]['ismoving']
-                    # player.updates['swim'] = shared_memory['playersupdate'][0][name]['swim']
-                    # player.updates['nme'] = shared_memory['playersupdate'][0][name]['nme']
-                    # player.updates['action'] = shared_memory['playersupdate'][0][name]['action']
                     
         except KeyError as e:
             self.all_players.pop(name)

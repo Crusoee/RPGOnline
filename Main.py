@@ -86,6 +86,8 @@ def game_loop(player, shared_memory, window_size):
 
         input.GamePlayInput_call(render.chunk_data, shared_memory)
 
+        render.center_camera()
+
         player_manager.move_players()
 
         if rl.get_screen_width() != window_size[0] or rl.get_screen_height() != window_size[1]:

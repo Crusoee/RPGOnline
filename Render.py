@@ -18,15 +18,18 @@ class Render:
         
         self.chunk_data = {}
 
-        self.zoom = 1.3
+        self.zoom = 1.7
         self.camera = rl.Camera2D(
             rl.Vector2(window_size[0]/2 - PLAYER_WIDTH/2, window_size[1]/2),  # Offset from the center of the screen
-            rl.Vector2(self.player.updates['x'], self.player.updates['y']),      # The target position in the world
+            rl.Vector2(self.player.updates['x'] - self.player.base.x, self.player.updates['y'] + PLAYER_HEIGHT // 2),      # The target position in the world
             0.0,                   # Camera rotation in degrees
             self.zoom                    # Camera zoom (1.0 is default)
         )
 
         self.all_players = [player]
+
+    def center_camera(self):
+        self.camera.target = rl.Vector2(self.player.updates['x'] - self.player.base.x, self.player.updates['y'] + PLAYER_HEIGHT // 2)
 
     def draw_tiles(self, all_players):
         # Calculate player's chunk position
@@ -120,9 +123,9 @@ class Render:
         raylib.ClearBackground(rl.RAYWHITE)
         raylib.BeginMode2D(self.camera)
 
-        self.draw_tiles(all_players)
-
         self.draw_npcs(shared_memory)
+
+        self.draw_tiles(all_players)
 
         self.draw_highlight()
 
