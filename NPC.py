@@ -9,8 +9,11 @@ class NPC():
         self.respawnt = 3600
         self.respawnc = 0
 
+        self.coord = (x,y)
+
     def get_key(self):
         return f'{self.x}{self.y}'
+    
 
 class NPC_Handler():
     def __init__(self):

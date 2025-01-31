@@ -135,7 +135,7 @@ def main() -> int:
         while shared_memory["login_successful"] == "":
             ...
 
-        print(shared_memory["login_successful"])
+        # print(shared_memory["login_successful"])
 
         if shared_memory["login_successful"] == False:
             communicationloop.join()

@@ -56,7 +56,7 @@ class GamePlayInput():
             target_distance = distance(self.player.updates['x'],self.player.updates['y'], player['x'],player['y'])
             if target_distance < self.player.stats['attackingdist']:
                 self.player.updates['action']['type'] = 'attack'
-                self.player.updates['coord'] = None
+                # self.player.updates['coord'] = None
             elif target_distance > self.player.stats['trackingdist']:
                 self.player.updates['action'] = EMPTY
                 self.attacking = False
@@ -71,7 +71,7 @@ class GamePlayInput():
             target_distance = distance(self.player.updates['x'],self.player.updates['y'], self.player.updates['action']['x'],self.player.updates['action']['y'])
             if target_distance < self.player.stats['attackingdist']:
                 self.player.updates['action']['type'] = 'attacknpc'
-                self.player.updates['coord'] = None
+                # self.player.updates['coord'] = None
             elif target_distance > self.player.stats['trackingdist']:
                 self.player.updates['action'] = EMPTY
                 self.attacking = False

@@ -15,11 +15,12 @@ class Player():
 
         self.angle = -90
         self.animcntr = 0
+        self.base = rl.Vector2(-int(PLAYER_WIDTH / 2), -PLAYER_HEIGHT)
         
         self.updates = {
                     'x' : x,
                     'y' : y,
-                    'coord' : None,
+                    'coord' : (x - self.base.x,y - self.base.y),
                     'nme' : name,
                     'swim' : False,
                     'ismoving' : False,
@@ -35,7 +36,6 @@ class Player():
                 }
         
         self.respawn = rl.Vector2(self.updates['x'],self.updates['y'])
-        self.base = rl.Vector2(-int(PLAYER_WIDTH / 2), -PLAYER_HEIGHT)
         self.prev_locsize = rl.Vector2(self.updates['x'] - self.base.x,self.updates['y'] - self.base.y)
         
         self.stats = {
@@ -72,8 +72,8 @@ class Player():
 
                 'hinderedspeedmult' : 1,
 
-                'speed' : 130,
-                'swmspeed' : 65,
+                'speed' : 100,
+                'swmspeed' : 50,
 
                 'killcount' : 0,
 
@@ -280,9 +280,14 @@ class Player():
             self.updates['swim'] = False
 
         # moving depending on if there is a updates['coord'] to follow
-        if self.updates['coord'] != None:
+        if self.updates['action']['type'] != None:
+            self.is_moving = distance(self.updates['x'] - self.base.x,self.updates['y'] - self.base.y, self.updates['coord'][0], self.updates['coord'][1]) > self.stats['attackingdist']
+        else:
+            self.is_moving = distance(self.updates['x'] - self.base.x,self.updates['y'] - self.base.y, self.updates['coord'][0], self.updates['coord'][1]) > 1.0
+        
+        if self.is_moving:
             self.animcntr -= rl.get_frame_time() * (self.stats['speed'] / 25 * self.stats['hinderedspeedmult'])
-            self.is_moving = True
+            # self.is_moving = True
             displaced = rl.Vector2(self.updates['coord'][0] - self.updates['x'] + self.base.x, self.updates['coord'][1] - self.updates['y'] + self.base.y)
             self.angle = math.degrees(math.atan2(-displaced.y, displaced.x))
             length = math.sqrt(displaced.x**2 + displaced.y**2)
@@ -295,11 +300,11 @@ class Player():
                     self.updates['x'] += dir_vec.x * self.stats['speed'] * self.stats['hinderedspeedmult'] * raylib.GetFrameTime()
                     self.updates['y'] += dir_vec.y * self.stats['speed'] * self.stats['hinderedspeedmult'] * raylib.GetFrameTime()
 
-                if length < 150.0 * raylib.GetFrameTime():
-                    self.updates['coord'] = None
+                # if length < 150.0 * raylib.GetFrameTime():
+                #     self.updates['coord'] = None
         else:
             self.animcntr = 0
-            self.is_moving = False
+            # self.is_moving = False
 
     # def attack_reset(self):
     #     self.attacking = False

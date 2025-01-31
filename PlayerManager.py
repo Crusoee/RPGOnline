@@ -25,6 +25,7 @@ class PlayerManager:
                     #     ...
 
                     player.updates['coord'] = shared_memory['playersupdate'][0][name]['coord']
+                    player.updates['action'] = shared_memory['playersupdate'][0][name]['action']
                     
         except KeyError as e:
             self.all_players.pop(name)
