@@ -2,9 +2,8 @@ import pyray as rl
 import raylib as raylib
 import multiprocessing
 
-
 from Objects.Player import Player
-from Misc.CONSTANTS import TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS, PLAYER_WIDTH,PLAYER_HEIGHT
+from Misc.CONSTANTS import PLAYER_WIDTH
 from Network.Client.Client import client_communication_loop
 
 import Render.Render as Render
