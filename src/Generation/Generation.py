@@ -1,12 +1,12 @@
 import noise
 import numpy as np
 import matplotlib.pyplot as plt
-from CONSTANTS import CHUNK_SIZE, TILE_SIZE
+from Misc.CONSTANTS import CHUNK_SIZE, TILE_SIZE
 import random
 import pyray as rl
 import raylib as raylib
 
-from Object import Palm
+from Objects.Object import Palm
 
 import numpy as np
 import matplotlib.pyplot as plt

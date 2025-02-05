@@ -2,10 +2,10 @@ import raylib
 import pyray as rl
 import math
 
-from Generation import simplex_noise
-from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH
-import Generation
-from Helper import select_player, distance
+from Generation.Generation import simplex_noise
+from Misc.CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH
+import Generation.Generation as Generation
+from Misc.Helper import select_player, distance
 
 EMPTY = {
             'type' : None,

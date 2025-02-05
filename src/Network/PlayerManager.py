@@ -1,4 +1,4 @@
-from Player import Player
+from Objects.Player import Player
 
 class PlayerManager:
     def __init__(self, player):

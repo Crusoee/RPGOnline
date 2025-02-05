@@ -1,11 +1,12 @@
 import raylib
 import pyray as rl
 import math
-from Helper import select_player, distance
 
-from Generation import simplex_noise
-import Generation
-from CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH
+from Misc.Helper import select_player, distance
+from Misc.CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH
+
+from Generation.Generation import simplex_noise
+import Generation.Generation as Generation
 
 class Player():
     def __init__(self, x, y, name):

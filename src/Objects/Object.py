@@ -1,5 +1,5 @@
 import pyray as rl
-from CONSTANTS import PLAYER_HEIGHT
+from Misc.CONSTANTS import PLAYER_HEIGHT
 
 class Object:
     def __init__(self, name, x, y, texture):

@@ -3,14 +3,14 @@ import raylib as raylib
 import multiprocessing
 
 
-from Player import Player
-from CONSTANTS import TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS, PLAYER_WIDTH,PLAYER_HEIGHT
-from Client import client_communication_loop
+from Objects.Player import Player
+from Misc.CONSTANTS import TILE_SIZE, CHUNK_SIZE, NUM_CHUNKS, PLAYER_WIDTH,PLAYER_HEIGHT
+from Network.Client.Client import client_communication_loop
 
-import Render
-import Menu
-import GamePlayInput
-import PlayerManager 
+import Render.Render as Render
+import Menu.Menu as Menu
+import Input.GamePlayInput as GamePlayInput
+import Network.PlayerManager as PlayerManager 
 
 # --- main ---
 def game_loop(player, shared_memory, window_size):
@@ -30,14 +30,14 @@ def game_loop(player, shared_memory, window_size):
     from what I understand, all textures must be loaded here and not on any other file. Not sure why.
     """
 
-    cursorTexture = rl.load_texture("Mouse\dwarven_gauntlet.png")
+    cursorTexture = rl.load_texture("Textures\\Mouse\\dwarven_gauntlet.png")
 
-    tiles = {'water_tile' : rl.load_texture("topdown_tiles\\tiles\\deep0\\straight\\0\\0.png"),
-        'shallow_tile' : rl.load_texture("topdown_tiles\\tiles\\shallow0\\straight\\0\\0.png"),
-        'sand_tile' : rl.load_texture("topdown_tiles\\tiles\\beach0\\straight\\0\\0.png"),
-        'grass_tile' : rl.load_texture("topdown_tiles\\tiles\\grass0\\straight\\0\\0.png"),
-        'forest_tile' : rl.load_texture("topdown_tiles\\Forest.png"),
-        'rock_tile' : rl.load_texture("topdown_tiles\\Mountain.png")}
+    tiles = {'water_tile' : rl.load_texture("Textures\\topdown_tiles\\tiles\\deep0\\straight\\0\\0.png"),
+        'shallow_tile' : rl.load_texture("Textures\\topdown_tiles\\tiles\\shallow0\\straight\\0\\0.png"),
+        'sand_tile' : rl.load_texture("Textures\\topdown_tiles\\tiles\\beach0\\straight\\0\\0.png"),
+        'grass_tile' : rl.load_texture("Textures\\topdown_tiles\\tiles\\grass0\\straight\\0\\0.png"),
+        'forest_tile' : rl.load_texture("Textures\\topdown_tiles\\Forest.png"),
+        'rock_tile' : rl.load_texture("Textures\\topdown_tiles\\Mountain.png")}
     
     npc = rl.load_texture("Textures\orb_red.png")
 

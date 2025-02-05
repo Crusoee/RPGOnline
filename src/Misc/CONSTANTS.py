@@ -5,3 +5,4 @@ CHUNK_SIZE = 16  # Size of a chunk in tiles
 NUM_CHUNKS = 3   # Number of chunks to load around the player
 PLAYER_WIDTH = 40
 PLAYER_HEIGHT = 80
+TICK_RATE = 1 / 30 # 60 Hz

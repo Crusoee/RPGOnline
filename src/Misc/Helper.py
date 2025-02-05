@@ -1,7 +1,6 @@
 import pyray as rl
-import raylib
 import math
-from CONSTANTS import PLAYER_HEIGHT, PLAYER_WIDTH
+from Misc.CONSTANTS import PLAYER_HEIGHT, PLAYER_WIDTH
 
 def select_player(data):
     return rl.Rectangle(data['x'] - 25,data['y'] - 25,PLAYER_WIDTH + 50,PLAYER_HEIGHT + 50)

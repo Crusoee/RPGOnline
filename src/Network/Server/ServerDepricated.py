@@ -10,8 +10,8 @@ import json
 import asyncio
 import aiofiles
 
-from NPC import NPC
-import Player
+from Objects.NPC import NPC
+from Objects.Player import Player as Player
 
 # Constants
 HOST = "0.0.0.0"
@@ -287,7 +287,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
     loop = asyncio.get_event_loop()
 
-    player_instance = Player.Player(0,0,'')
+    player_instance = Player(0,0,'')
 
     # Client updates to server
     updates = player_instance.updates
@@ -304,7 +304,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     login = await get_message(reader, False)
 
     # Opening all player accounts and storing them in a dictionary
-    async with aiofiles.open("players.json", mode='r') as json_file:
+    async with aiofiles.open(f"src\\Network\\Server\\players.json", mode='r') as json_file:
         player_data = await json_file.read()
         player_data_loaded_from_storage = json.loads(player_data)
 
@@ -358,7 +358,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
         new_player = {"username" : login[0], "password" : login[1],"info" : info}
 
         # Appending it to the current list of players
-        await append("players.json",new_player)
+        await append(f"src\\Network\\Server\\players.json",new_player)
 
     else:
         print("login failed", login[0])
@@ -405,7 +405,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     SAVE DATA AFTER CLIENT EXITING
     """
 
-    async with aiofiles.open("players.json", mode='r') as json_file:
+    async with aiofiles.open(f"src\\Network\\Server\\players.json", mode='r') as json_file:
         player_data = await json_file.read()
         player_data_loaded_from_storage = json.loads(player_data)
 
@@ -414,7 +414,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 player_data_loaded_from_storage[i]["info"] = client_stats[username]
 
 
-    async with aiofiles.open("players.json", mode='w') as json_file:
+    async with aiofiles.open(f"src\\Network\\Server\\players.json", mode='w') as json_file:
         # Serialize the data and write to the file
         await json_file.write(json.dumps(player_data_loaded_from_storage, indent=4))
 
@@ -448,6 +448,6 @@ async def start_server():
     async with server:
         await server.serve_forever()
 
-if __name__ == "__main__":
-    print('Server Starting...')
-    asyncio.run(start_server())
+# if __name__ == "__main__":
+#     print('Server Starting...')
+#     asyncio.run(start_server())
