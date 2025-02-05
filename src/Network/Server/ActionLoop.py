@@ -16,10 +16,10 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
     communicate what the player is attacking.
     """
     npcs = {}
-    for i in range(10):
-        npc = NPC("orb", 60, 0, random.randint(-1000,1000), random.randint(-1000,1000), 64)
-        # the key can be whatever its coordinates are
-        npcs[npc.get_key()] = npc
+    # for i in range(10):
+    #     npc = NPC("orb", 60, 0, random.randint(-1000,1000), random.randint(-1000,1000), 64)
+    #     # the key can be whatever its coordinates are
+    #     npcs[npc.get_key()] = npc
 
     while True: 
         try:

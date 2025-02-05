@@ -79,10 +79,10 @@ class Render:
                 chunk_objects.sort(key=lambda item: item.updates['y'])
 
                 for object in chunk_objects:
-                    if 'coord' in object.updates.keys():
-                        object.draw(self.player_textures)
-                    else:
+                    if 'direction' in object.updates.keys():
                         object.draw(self.palm_textures)
+                    else:
+                        object.draw()
 
     def draw_npcs(self, shared_memory):
         for key, value in shared_memory['npcs'][0].items():

@@ -1,30 +1,18 @@
 import pyray as rl
 from Misc.CONSTANTS import PLAYER_HEIGHT
+from Objects.ObjectInfo import ObjectInfo
 
-class Object:
-    def __init__(self, name, x, y, texture):
+class Object(ObjectInfo):
+    def __init__(self, name, x, y, texture, width, height):
+
+        super().__init__(name, x, y)
 
         self.texture = texture
 
-        self.base = (x + texture.width // 2, y + texture.height // 2)
+        self.width = width
+        self.height = height
 
-        self.updates = {
-                    'x' : x,
-                    'y' : y,
-                    'coord' : None,
-                    'nme' : name,
-                    'swim' : False,
-                    'ismoving' : False,
-                    'isattacking' : False, 
-                    'canmove' : True,
-
-                    'action' : {
-                            'type' : None,
-                            'target' :None,
-                            'x' : None,
-                            'y' : None,
-                        }
-                }
+        self.base = (x + width // 2, y + height)
     
     def draw(self):
         rl.draw_texture_pro(self.texture, rl.Rectangle(0,0,self.texture.width * self.updates['direction'], self.texture.height), 
@@ -35,8 +23,9 @@ class Object:
 
     def get_y(self):
         return self.updates['y']
-
-
+    
+    def move(self):
+        ...
 
 class Palm:
 

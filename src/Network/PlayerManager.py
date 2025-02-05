@@ -1,16 +1,17 @@
 from Objects.Player import Player
 
 class PlayerManager:
-    def __init__(self, player):
+    def __init__(self, player, player_texture):
+        self.player_texture = player_texture
         self.player = player
         self.all_players = {player.updates['nme'] : self.player}
 
     def update_all_players_list(self, shared_memory):
-        for key, value in shared_memory['playersupdate'][0].items():
-            if key not in self.all_players.keys():
-                self.all_players[key] = Player(shared_memory['playersupdate'][0][key]['x'],shared_memory['playersupdate'][0][key]['y'],key)
-                self.all_players[key].updates = shared_memory['playersupdate'][0][key]
-                self.all_players[key].stats = shared_memory['playersinfo'][0][key]
+        for name, value in shared_memory['playersupdate'][0].items():
+            if name not in self.all_players.keys():
+                self.all_players[name] = Player(name, shared_memory['playersupdate'][0][name]['x'],shared_memory['playersupdate'][0][name]['y'], self.player_texture)
+                self.all_players[name].updates = shared_memory['playersupdate'][0][name]
+                self.all_players[name].stats = shared_memory['playersinfo'][0][name]
 
         try:
             for name, player in self.all_players.items():

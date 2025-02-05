@@ -8,92 +8,20 @@ from Misc.CONSTANTS import SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, CHUNK_SIZE, P
 from Generation.Generation import simplex_noise
 import Generation.Generation as Generation
 
-class Player():
-    def __init__(self, x, y, name):
+from Objects.Object import Object
 
-        x *= 64
-        y *= 64
+class Player(Object):
+    def __init__(self, name, x, y, texture):
+        super().__init__(name, x, y, texture, PLAYER_WIDTH, PLAYER_HEIGHT)
 
         self.angle = -90
         self.animcntr = 0
         self.base = rl.Vector2(-int(PLAYER_WIDTH / 2), -PLAYER_HEIGHT)
         
-        self.updates = {
-                    'x' : x,
-                    'y' : y,
-                    'coord' : (x - self.base.x,y - self.base.y),
-                    'nme' : name,
-                    'swim' : False,
-                    'ismoving' : False,
-                    # 'isattacking' : False, 
-                    # 'canmove' : True,
-
-                    'action' : {
-                            'type' : None,
-                            'target' :None,
-                            'x' : None,
-                            'y' : None,
-                        }
-                }
-        
         self.respawn = rl.Vector2(self.updates['x'],self.updates['y'])
         self.prev_locsize = rl.Vector2(self.updates['x'] - self.base.x,self.updates['y'] - self.base.y)
-        
-        self.stats = {
-                'dmg' : 10,
-                'lifesteal' : 0,
-                'poison' : 0,
 
-                'crit' : 1.1,
-                'chance' : 50,
-
-                'mgcdamage' : 18,
-                'maxmgc' : 500,
-                'mgc' : 500,
-                'mgcregen' : 90,
-                'mgcregenbonus' : 1,
-                'mgcctnr' : 0,
-                'mgcheal' : 5,
-                'mgcburn' : 0.1,
-
-                'arm' : 0,
-                'thorns' : 0,
-
-                'hlth' : 100,
-                'mhlth' : 100,
-                'regens' : 60,
-                'regencntr' : 0,
-                'regenbonus' : 1,
-
-                'atc' : 30,
-                'ats' : 30,
-
-                'ress' : 300,
-                'rescntr' : 0,
-
-                'hinderedspeedmult' : 1,
-
-                'speed' : 100,
-                'swmspeed' : 50,
-
-                'killcount' : 0,
-
-                'attackingdist' : 50,
-                'trackingdist' : 800,
-
-                'maxenergy' : 100,
-                'energy' : 100,
-                'energyregen' : 120,
-                'energycntr' : 0,
-                'energyregenbonus' : 10,
-
-                'energyconsumption' : 20,
-                'energyconsumptionrate' : 30,
-                'energyconsumptionratecntr' : 0,
-                'lowenergyspeed' : 0.5,
-            }
-
-    def draw(self, textures):
+    def draw(self):
 
         if self.animcntr <= -4:
             self.animcntr = 0
@@ -101,26 +29,26 @@ class Player():
         if self.updates['swim']:
             if self.updates['coord'] != None:
                 if -135 < self.angle <= -45:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animcntr)),0,256, 150), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((256 * math.floor(self.animcntr)),0,256, 150), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,self.texture['player'].width/10, self.texture['player'].height/10 - 47), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if -45 < self.angle <= 45:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 3),256, 150), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 3),256, 150), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,self.texture['player'].width/10, self.texture['player'].height/10 - 47), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if 45 < self.angle <= 135:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 1),256, 150), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 1),256, 150), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,self.texture['player'].width/10, self.texture['player'].height/10 - 47), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if self.angle <= -135 or self.angle > 135:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 2),256, 150), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 2),256, 150), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,self.texture['player'].width/10, self.texture['player'].height/10 - 47), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
@@ -128,26 +56,26 @@ class Player():
                 # self.animcntr -= rl.get_frame_time() * (self.stats['swmspeed'] / 25 * self.stats['hinderedspeedmult'])
             else:
                 if -135 < self.angle <= -45:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((0),0,256, 150), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((0),0,256, 150), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,self.texture['player'].width/10, self.texture['player'].height/10 - 47), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if -45 < self.angle <= 45:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((0),(256 * 3),256, 150), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((0),(256 * 3),256, 150), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,self.texture['player'].width/10, self.texture['player'].height/10 - 47), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if 45 < self.angle <= 135:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((0),(256 * 1),256, 150), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((0),(256 * 1),256, 150), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,self.texture['player'].width/10, self.texture['player'].height/10 - 47), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if self.angle <= -135 or self.angle > 135:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((0),(256 * 2),256, 150), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,textures['player'].width/10, textures['player'].height/10 - 47), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((0),(256 * 2),256, 150), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10 + 34,self.texture['player'].width/10, self.texture['player'].height/10 - 47), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
@@ -156,26 +84,26 @@ class Player():
         else:
             if self.updates['coord'] != None:
                 if -135 < self.angle <= -45:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animcntr)),0,256, 256), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,textures['player'].width/10, textures['player'].height/10), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((256 * math.floor(self.animcntr)),0,256, 256), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,self.texture['player'].width/10, self.texture['player'].height/10), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if -45 < self.angle <= 45:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 3),256, 256), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,textures['player'].width/10, textures['player'].height/10), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 3),256, 256), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,self.texture['player'].width/10, self.texture['player'].height/10), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if 45 < self.angle <= 135:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 1),256, 256), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,textures['player'].width/10, textures['player'].height/10), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 1),256, 256), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,self.texture['player'].width/10, self.texture['player'].height/10), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if self.angle <= -135 or self.angle > 135:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 2),256, 256), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,textures['player'].width/10, textures['player'].height/10), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle((256 * math.floor(self.animcntr)),(256 * 2),256, 256), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,self.texture['player'].width/10, self.texture['player'].height/10), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
@@ -183,26 +111,26 @@ class Player():
                 # self.animcntr -= rl.get_frame_time() * (self.stats['speed'] / 25 * self.stats['hinderedspeedmult'])
             else:
                 if -135 < self.angle <= -45:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle(0,0,256, 256), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,textures['player'].width/10, textures['player'].height/10), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle(0,0,256, 256), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,self.texture['player'].width/10, self.texture['player'].height/10), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if -45 < self.angle <= 45:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle(0,(256 * 3),256, 256), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,textures['player'].width/10, textures['player'].height/10), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle(0,(256 * 3),256, 256), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,self.texture['player'].width/10, self.texture['player'].height/10), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if 45 < self.angle <= 135:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle(0,(256 * 1),256, 256), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,textures['player'].width/10, textures['player'].height/10), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle(0,(256 * 1),256, 256), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,self.texture['player'].width/10, self.texture['player'].height/10), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
                 if self.angle <= -135 or self.angle > 135:
-                    rl.draw_texture_pro(textures['player'], rl.Rectangle(0,(256 * 2),256, 256), 
-                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,textures['player'].width/10, textures['player'].height/10), 
+                    rl.draw_texture_pro(self.texture['player'], rl.Rectangle(0,(256 * 2),256, 256), 
+                                        rl.Rectangle(self.updates['x'] - 31,self.updates['y'] - 10,self.texture['player'].width/10, self.texture['player'].height/10), 
                                         rl.Vector2(0,0),
                                         0.0, 
                                         rl.WHITE)
@@ -210,8 +138,8 @@ class Player():
                 # self.animcntr = 0
 
 
-        text_size = rl.measure_text_ex(textures["name_font"], self.updates['nme'], 30, 0.0)
-        rl.draw_text_ex(textures["name_font"], self.updates['nme'], rl.Vector2(int(self.updates['x'] - (text_size.x / 2) + PLAYER_WIDTH / 2), int(self.updates['y'] - 80)), 40, 0.0, rl.BLACK)
+        text_size = rl.measure_text_ex(self.texture["name_font"], self.updates['nme'], 30, 0.0)
+        rl.draw_text_ex(self.texture["name_font"], self.updates['nme'], rl.Vector2(int(self.updates['x'] - (text_size.x / 2) + PLAYER_WIDTH / 2), int(self.updates['y'] - 80)), 40, 0.0, rl.BLACK)
 
         # Ensure health ratio is clamped between 0 and 1
         health_ratio = max(0, min(1, self.stats['hlth'] / self.stats['mhlth']))
@@ -224,27 +152,27 @@ class Player():
         # rl.draw_rectangle(base_x, base_y, 80, 20, rl.RED)  # Background
         # rl.draw_rectangle(base_x, base_y, int(80 * health_ratio), 20, rl.GREEN)  # Health bar
 
-        rl.draw_texture_pro(textures["healthframe"], rl.Rectangle(0,0,textures["healthframe"].width, textures["healthframe"].height), 
+        rl.draw_texture_pro(self.texture["healthframe"], rl.Rectangle(0,0,self.texture["healthframe"].width, self.texture["healthframe"].height), 
                     rl.Rectangle(base_x, base_y, 80, 20), 
                     rl.Vector2(0,0),
                     0.0, 
                     rl.WHITE)
-        rl.draw_texture_pro(textures["healthbar"], rl.Rectangle(0,0,textures["healthbar"].width * health_ratio, textures["healthbar"].height), 
+        rl.draw_texture_pro(self.texture["healthbar"], rl.Rectangle(0,0,self.texture["healthbar"].width * health_ratio, self.texture["healthbar"].height), 
                     rl.Rectangle(base_x, base_y, 80 * health_ratio, 20), 
                     rl.Vector2(0,0),
                     0.0, 
                     rl.WHITE)
-        rl.draw_texture_pro(textures["healthframe"], rl.Rectangle(0,0,textures["healthframe"].width, textures["healthframe"].height), 
+        rl.draw_texture_pro(self.texture["healthframe"], rl.Rectangle(0,0,self.texture["healthframe"].width, self.texture["healthframe"].height), 
                     rl.Rectangle(base_x, base_y + 12, 80, 20), 
                     rl.Vector2(0,0),
                     0.0, 
                     rl.WHITE)
-        rl.draw_texture_pro(textures["Energybar"], rl.Rectangle(0,0,textures["Energybar"].width * energy_ratio, textures["Energybar"].height), 
+        rl.draw_texture_pro(self.texture["Energybar"], rl.Rectangle(0,0,self.texture["Energybar"].width * energy_ratio, self.texture["Energybar"].height), 
                     rl.Rectangle(base_x, base_y + 15, 80 * energy_ratio, 10), 
                     rl.Vector2(0,0),
                     0.0, 
                     rl.WHITE)
-        rl.draw_texture_pro(textures["Magicbar"], rl.Rectangle(0,0,textures["Magicbar"].width * magic_ratio, textures["Magicbar"].height), 
+        rl.draw_texture_pro(self.texture["Magicbar"], rl.Rectangle(0,0,self.texture["Magicbar"].width * magic_ratio, self.texture["Magicbar"].height), 
                     rl.Rectangle(base_x, base_y + 20, 80 * magic_ratio, 10), 
                     rl.Vector2(0,0),
                     0.0, 
@@ -256,18 +184,18 @@ class Player():
         #     rl.draw_circle(int(self.updates['x'] - self.base.x),int(self.updates['y'] - self.base.y / 2),self.distance,rl.Color(255,255,0,100))
 
 
-    def update_state(self):
-        # The current noise level your character is standing on
-        value = simplex_noise((self.updates['x'] - self.base.x) // TILE_SIZE, 
-                        (self.updates['y'] - self.base.y) // TILE_SIZE)
+    # def update_state(self):
+    #     # The current noise level your character is standing on
+    #     value = simplex_noise((self.updates['x'] - self.base.x) // TILE_SIZE, 
+    #                     (self.updates['y'] - self.base.y) // TILE_SIZE)
 
-        # Changing the speed of your player depending on what terrain their standing on
-        if value < Generation.water:
-            self.player.speed = self.player.stats['swmspeed'] * self.player.stats['hinderedspeedmult']
-            self.player.updates['swim'] = True
-        else:
-            self.player.speed = self.player.stats['speed'] * self.player.stats['hinderedspeedmult']
-            self.player.updates['swim'] = False
+    #     # Changing the speed of your player depending on what terrain their standing on
+    #     if value < Generation.water:
+    #         self.player.speed = self.player.stats['swmspeed'] * self.player.stats['hinderedspeedmult']
+    #         self.player.updates['swim'] = True
+    #     else:
+    #         self.player.speed = self.player.stats['speed'] * self.player.stats['hinderedspeedmult']
+    #         self.player.updates['swim'] = False
 
     def move(self):
 

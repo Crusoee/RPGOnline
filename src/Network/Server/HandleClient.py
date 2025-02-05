@@ -3,7 +3,7 @@ import aiofiles
 import json
 import traceback
 
-from Objects.Player import Player
+from Objects.ObjectInfo import ObjectInfo
 from Network.Server.Communication import send_message, get_message
 
 def match_dict(dictionary1, dictionary2_set):
@@ -52,16 +52,14 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     again (this seems to be the only way to edit specific values).
 
     """
-
-    loop = asyncio.get_event_loop()
-
-    player_instance = Player(0,0,'')
+    # Place holder
+    object_info = ObjectInfo('',0,0)
 
     # Client updates to server
-    updates = player_instance.updates
+    updates = object_info.updates
 
     # Player info sent to clients
-    info = player_instance.stats
+    info = object_info.stats
     
     """
     LOGIN...
@@ -135,7 +133,8 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
     # setting up client
     # with client_data_lock:
-    client_data[login[0]] = updates
+    updates = await get_message(reader, False)
+    client_data[login[0]] = updates[0]
     client_stats[login[0]] = info
     client_con[login[0]] = writer
 
@@ -146,7 +145,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     while True:
         try:
             # creating a mutable copy of client data
-            info = client_data[username]
+            # info = client_data[username]
 
             # get the message from the client
             updates = await get_message(reader, False)

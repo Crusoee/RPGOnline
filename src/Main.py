@@ -3,6 +3,7 @@ import raylib as raylib
 import multiprocessing
 
 from Objects.Player import Player
+from Objects.ObjectInfo import ObjectInfo
 from Misc.CONSTANTS import PLAYER_WIDTH
 from Network.Client.Client import client_communication_loop
 
@@ -12,7 +13,7 @@ import Input.GamePlayInput as GamePlayInput
 import Network.PlayerManager as PlayerManager 
 
 # --- main ---
-def game_loop(player, shared_memory, window_size):
+def game_loop(default, shared_memory, window_size):
 
     raylib.SetConfigFlags(rl.FLAG_WINDOW_RESIZABLE)
     raylib.InitWindow(window_size[0], window_size[1], b"RPG Online")
@@ -64,8 +65,14 @@ def game_loop(player, shared_memory, window_size):
 
     palm = rl.load_texture("Textures\Environment\palmtree.png")
 
+
+    # Place Holder
+    player = Player('', 0, 0, player_textures)
+    player.updates = default.updates
+    player.stats = default.stats
+    
     # Instances
-    player_manager = PlayerManager.PlayerManager(player)
+    player_manager = PlayerManager.PlayerManager(player, player_textures)
     menu = Menu.Menu(window_size, menu_textures)
     render = Render.Render(player, tiles, palm, player_textures, npc, cursorTexture, menu, window_size)
     input = GamePlayInput.GamePlayInput(player, render.camera)
@@ -113,16 +120,17 @@ def main() -> int:
         username = input("Username: ")
         password = input("Password: ")
 
-        player = Player(69, -12, username)
+        # True Spawning Point
+        default = ObjectInfo(username,4416,-768)
         
         manager = multiprocessing.Manager()
         shared_memory = manager.dict()
-        shared_memory["player"] = player.updates
+        shared_memory["player"] = default.updates
         shared_memory["playersupdate"] = manager.list([{}])  # Use a managed list for nested data
         shared_memory["playersinfo"] = manager.list([{}])
         shared_memory["npcs"] = [{}]
         shared_memory["user"] = username
-        shared_memory["stats"] = player.stats
+        shared_memory["stats"] = default.stats
         shared_memory["running"] = True
         shared_memory["login_successful"] = ""
 
@@ -142,7 +150,7 @@ def main() -> int:
         if shared_memory["login_successful"] == True:
             break
 
-    game_loop(player, shared_memory, window_size)
+    game_loop(default, shared_memory, window_size)
 
     communicationloop.join()
 
