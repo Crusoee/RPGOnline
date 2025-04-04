@@ -31,7 +31,7 @@ class Render:
     def center_camera(self):
         self.camera.target = rl.Vector2(self.player.updates['x'] - self.player.base.x, self.player.updates['y'] + PLAYER_HEIGHT // 2)
 
-    def draw_tiles(self, all_players):
+    def draw_tiles(self):
         # Calculate player's chunk position
         player_chunk_x = int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE))
         player_chunk_y = int((self.player.updates['y'] - self.player.base.y) // (TILE_SIZE * CHUNK_SIZE))
@@ -48,10 +48,8 @@ class Render:
                 # Generate chunk if not already cached
                 if (chunk_x, chunk_y) not in self.chunk_data:
                     terrain_data = generate_terrain_chunk(chunk_x, chunk_y)
-                    collision_data = generate_collision_chunk(terrain_data, chunk_x, chunk_y)
-                    palm_data = generate_palms(chunk_x, chunk_y)
                     # print(collision_data, chunk_x, chunk_y)
-                    self.chunk_data[chunk_x, chunk_y] = [terrain_data,collision_data, palm_data]
+                    self.chunk_data[chunk_x, chunk_y] = [terrain_data]
 
                 # Draw tiles in the chunk
                 for y in range(CHUNK_SIZE):
@@ -64,33 +62,9 @@ class Render:
 
         self.chunk_data = dict(sorted(self.chunk_data.items(), key=lambda item: item[0][1]))
 
-        skip_chunk_left = int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)) -1
-        skip_chunk_right = int((self.player.updates['x'] - self.player.base.x) // (TILE_SIZE * CHUNK_SIZE)) +1
-
-        for chunk_y in range(int(chunk_y_start), int(chunk_y_end)):
-            for chunk_x in range(int(chunk_x_start), int(chunk_x_end)):
-                if (chunk_x == skip_chunk_left or chunk_x == skip_chunk_right) and chunk_y == player_chunk_y:
-                    continue
-                elif chunk_x == player_chunk_x and chunk_y == player_chunk_y:
-                    chunk_objects = list(all_players.values()) + self.chunk_data[chunk_x, chunk_y][2] + self.chunk_data[skip_chunk_left, chunk_y][2] + self.chunk_data[skip_chunk_right, chunk_y][2]
-                else:
-                    chunk_objects = self.chunk_data[chunk_x, chunk_y][2]
-
-                chunk_objects.sort(key=lambda item: item.updates['y'])
-
-                for object in chunk_objects:
-                    if 'direction' in object.updates.keys():
-                        object.draw(self.palm_textures)
-                    else:
-                        object.draw()
-
-    def draw_npcs(self, shared_memory):
-        for key, value in shared_memory['npcs'][0].items():
-            try:
-                rl.draw_texture_pro(self.npc_textures,rl.Rectangle(0,0,self.npc_textures.width, self.npc_textures.height), rl.Rectangle(value.updates['x'],value.updates['y'],self.npc_textures.width + 20, self.npc_textures.height + 20), rl.Vector2(0,0), 0.0, rl.WHITE)
-                
-            except (KeyError) as e:
-                print("Error: ", e)
+    def draw_objects(self, players):
+        for player in players.keys():
+            players[player].draw()
 
     def draw_highlight(self):
         if self.player.updates['coord'] != None:
@@ -117,15 +91,15 @@ class Render:
                 rl.Color(255,255,255,255)
             )
 
-    def draw_call(self, shared_memory, all_players):
+    def draw_call(self,all_players):
 
         raylib.BeginDrawing()
         raylib.ClearBackground(rl.RAYWHITE)
         raylib.BeginMode2D(self.camera)
+ 
+        self.draw_objects(all_players)
 
-        self.draw_npcs(shared_memory)
-
-        self.draw_tiles(all_players)
+        self.draw_tiles()
 
         self.draw_highlight()
 

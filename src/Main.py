@@ -80,7 +80,7 @@ def game_loop(default, shared_memory, window_size):
     while not raylib.WindowShouldClose():
         # -------------Draw-------------------
 
-        render.draw_call(shared_memory, player_manager.all_players)
+        render.draw_call(player_manager.all_players)
 
         # -------------Mechanics-------------------
 
