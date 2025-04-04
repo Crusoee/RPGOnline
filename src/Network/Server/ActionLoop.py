@@ -4,8 +4,9 @@ import time
 import asyncio
 
 from Misc.CONSTANTS import TICK_RATE
-from Objects.NPC import NPC
+from Objects.ObjectInfo import ObjectInfo
 from Network.Server.Communication import send_message
+from Network.Server.NPCManager import NPCManager
 
 async def game_loop(client_data, action_queue, client_stats, client_con):
     """
@@ -16,6 +17,9 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
     communicate what the player is attacking.
     """
     npcs = {}
+
+    npc_manager = NPCManager()
+
     # for i in range(10):
     #     npc = NPC("orb", 60, 0, random.randint(-1000,1000), random.randint(-1000,1000), 64)
     #     # the key can be whatever its coordinates are
@@ -28,6 +32,8 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
             This is to keep the server running at a constant speed.
             """
             start_time = time.time()
+
+            npc_manager.move_npcs(client_data)
 
             """
             This is the while loop to handle all actions created by the players.
@@ -84,19 +90,20 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
                 If a player attacks an NPC
                 """
                 if action['type'] == 'attacknpc' and client_stats[action['initiator']]['atc'] >= client_stats[action['initiator']]['ats'] and action['target'] in npcs.keys():
-                    npcs[action['target']].health -= client_stats[action['initiator']]['dmg']
+                    print(npc_manager.npc_chunk[npc_manager.get_player_chunk(client_data[action['initiator']]['x'],client_data[action['initiator']]['y'])][action['target']])
+                    npc_manager.npc_chunk[npc_manager.get_player_chunk(client_data[action['initiator']]['x'],client_data[action['initiator']]['y'])][action['target']].updates['hlth'] -= client_stats[action['initiator']]['dmg']
                     # Reset attack Counter
                     client_stats[action['initiator']]['atc'] = 0
 
                     # If an npcs health is less than 0
-                    if npcs[action['target']].health < 0:
+                    if npc_manager.npc_chunk[npc_manager.get_player_chunk(client_data[action['initiator']]['x'],client_data[action['initiator']]['y'])][action['target']].updates['hlth'] < 0:
                         client_stats[action['initiator']]['dmg'] += 0.01
                         if client_stats[action['initiator']]['hlth'] + 5.0 < client_stats[action['initiator']]['mhlth']:
                             client_stats[action['initiator']]['hlth'] += 5.0
                         else:
                             client_stats[action['initiator']]['hlth'] = client_stats[action['initiator']]['mhlth']
 
-                        npcs.pop(action['target'], None)
+                        npc_manager.npc_chunk[npc_manager.get_player_chunk(client_data[action['initiator']]['x'],client_data[action['initiator']]['y'])][action['target']].pop(action['target'], None)
 
                 if action['type'] == 'loot':
                     ...
@@ -162,7 +169,7 @@ async def game_loop(client_data, action_queue, client_stats, client_con):
                 # sending 3 messages to all clients with both updates and info on other clients
                 await send_message(client_con[addr], [client_data], False)
                 await send_message(client_con[addr], [client_stats], False)
-                await send_message(client_con[addr], [npcs], False)
+                await send_message(client_con[addr], [npc_manager.npc_chunk[npc_manager.get_player_chunk(client_data[addr]['x'],client_data[addr]['y'])]], False)
 
             # Wait until the next tick
             elapsed = time.time() - start_time

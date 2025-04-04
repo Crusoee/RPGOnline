@@ -1,20 +1,20 @@
-import multiprocessing
+from Network.Server.NPCManager import NPCManager
+from Objects.ObjectInfo import ObjectInfo
 
-def main():
-    manager = multiprocessing.Manager()
-    shared_dictionary_1 = manager.dict()
-    shared_dictionary_2 = manager.dict()
+import time
 
-    shared_dictionary_1 = {'ip1' : {'x': 1}, 'ip2' : {'x': 2}, 'ip3' : {'x': 3}}
-    shared_dictionary_2 = {'ip1' : {'a': 1}, 'ip2' : {'a': 2}, 'ip3' : {'a': 3}}
+def NPC_Behavior_test():
+    npc_obj = NPCManager()
 
-    dictionary1 = dict(shared_dictionary_1)
-    dictionary2 = dict(shared_dictionary_2)
+    player = ObjectInfo('',100,100)
+    
+    while True:
+        # npc_obj.get_nearby_npcs(0,0)
+        time.sleep(1/30)
 
-    for key, value in dictionary1.items():
-        dictionary1[key].update(dictionary2[key])
+        npc_obj.move_npcs([player])
 
-    print(dictionary1)
+        print(npc_obj.npc_chunk, player.updates['x'])
 
-if __name__ == '__main__':
-    main()
+        player.updates['x'] += 50
+        player.updates['y'] += 50

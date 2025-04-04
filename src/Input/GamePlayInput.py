@@ -121,10 +121,11 @@ class GamePlayInput():
                 
             for key, value in shared_memory['npcs'][0].items():
                 npc = shared_memory['npcs'][0][key]
-                if raylib.CheckCollisionPointRec(rl.Vector2(select_coordinate[0], select_coordinate[1]), rl.Rectangle(npc.x,npc.y,npc.size,npc.size)):
-                    self.player.updates['action']['target'] = f"{npc.x}{npc.y}"
-                    self.player.updates['action']['x'] = npc.x
-                    self.player.updates['action']['y'] = npc.y
+                if raylib.CheckCollisionPointRec(rl.Vector2(select_coordinate[0], select_coordinate[1]), rl.Rectangle(npc.updates['x'],npc.updates['y'],npc.size,npc.size)):
+                    self.player.updates['action']['target'] = npc.get_id()
+                    self.player.updates['action']['type'] = 'attacknpc'
+                    self.player.updates['action']['x'] = npc.updates['x']
+                    self.player.updates['action']['y'] = npc.updates['y']
                     return
             
             self.attacking = False

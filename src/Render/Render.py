@@ -87,7 +87,7 @@ class Render:
     def draw_npcs(self, shared_memory):
         for key, value in shared_memory['npcs'][0].items():
             try:
-                rl.draw_texture_pro(self.npc_textures,rl.Rectangle(0,0,self.npc_textures.width, self.npc_textures.height), rl.Rectangle(value.x,value.y,self.npc_textures.width + 20, self.npc_textures.height + 20), rl.Vector2(0,0), 0.0, rl.WHITE)
+                rl.draw_texture_pro(self.npc_textures,rl.Rectangle(0,0,self.npc_textures.width, self.npc_textures.height), rl.Rectangle(value.updates['x'],value.updates['y'],self.npc_textures.width + 20, self.npc_textures.height + 20), rl.Vector2(0,0), 0.0, rl.WHITE)
                 
             except (KeyError) as e:
                 print("Error: ", e)
