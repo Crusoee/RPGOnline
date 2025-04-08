@@ -36,11 +36,11 @@
             "maxenergy": 100,
             "energy": 100,
             "energyregen": 120,
-            "energycntr": 105,
+            "energycntr": 55,
             "energyregenbonus": 10,
             "energyconsumption": 20,
             "energyconsumptionrate": 30,
-            "energyconsumptionratecntr": 12,
+            "energyconsumptionratecntr": 6,
             "lowenergyspeed": 0.5,
             "username": "1"
         }

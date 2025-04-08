@@ -6,8 +6,6 @@ import random
 import pyray as rl
 import raylib as raylib
 
-from Objects.Object import Palm
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm, ListedColormap
@@ -147,19 +145,5 @@ def generate_terrain_chunk(chunk_x, chunk_y):
             chunk_data[y][x] = simplex_noise(chunk_x * CHUNK_SIZE + x, chunk_y * CHUNK_SIZE + y)
 
     return chunk_data
-
-def generate_palms(chunk_x, chunk_y):
-    random.seed(cantor_pairing(chunk_x, chunk_y))
-    amount = random.randint(5,15)
-    palm_data = []
-    for i in range(amount):
-        direction = random.choice([-1,1])
-        size = random.choice([.75,.8,1,1,1,1,1.2,1.2,1.5,1.7])
-        data = (random.randint(chunk_x * CHUNK_SIZE * 64, (chunk_x + 1) * CHUNK_SIZE * 64), random.randint(chunk_y * CHUNK_SIZE * 64, (chunk_y + 1) * CHUNK_SIZE * 64), direction, size)
-        if simplex_noise(data[0] // 64, data[1] // 64) > shallow:
-            # palm_data.append(data)
-            palm_data.append(Palm(data[0],data[1],direction,size))
-
-    return palm_data
 
 # show_landscape(generate_landscape(-24, -24, 24, 24))

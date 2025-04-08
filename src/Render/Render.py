@@ -1,7 +1,7 @@
 import pyray as rl
 import raylib as raylib
 from Misc.CONSTANTS import NUM_CHUNKS, CHUNK_SIZE, TILE_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH, SCREEN_WIDTH
-from Generation.Generation import generate_terrain_chunk, generate_palms, generate_collision_chunk, get_tile_texture, sand
+from Generation.Generation import generate_terrain_chunk, generate_collision_chunk, get_tile_texture
 import math
 
 class Render:
