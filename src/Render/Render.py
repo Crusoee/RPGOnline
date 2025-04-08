@@ -63,8 +63,8 @@ class Render:
         self.chunk_data = dict(sorted(self.chunk_data.items(), key=lambda item: item[0][1]))
 
     def draw_objects(self, players):
-        for player in players.keys():
-            players[player].draw()
+        for name, player in players.all_players.items():
+            player.draw()
 
     def draw_highlight(self):
         if self.player.updates['coord'] != None:
@@ -91,17 +91,18 @@ class Render:
                 rl.Color(255,255,255,255)
             )
 
-    def draw_call(self,all_players):
+    def draw_call(self,player_manager):
 
         raylib.BeginDrawing()
         raylib.ClearBackground(rl.RAYWHITE)
         raylib.BeginMode2D(self.camera)
  
-        self.draw_objects(all_players)
 
         self.draw_tiles()
 
         self.draw_highlight()
+        
+        self.draw_objects(player_manager)
 
         # for name, player in all_players.items():
         #     player.draw(self.player_textures)

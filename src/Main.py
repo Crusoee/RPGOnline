@@ -10,7 +10,7 @@ from Network.Client.Client import client_communication_loop
 import Render.Render as Render
 import Menu.Menu as Menu
 import Input.GamePlayInput as GamePlayInput
-import Network.PlayerManager as PlayerManager 
+import Network.Client.PlayerManager as PlayerManager 
 
 # --- main ---
 def game_loop(default, shared_memory, window_size):
@@ -80,7 +80,7 @@ def game_loop(default, shared_memory, window_size):
     while not raylib.WindowShouldClose():
         # -------------Draw-------------------
 
-        render.draw_call(player_manager.all_players)
+        render.draw_call(player_manager)
 
         # -------------Mechanics-------------------
 
