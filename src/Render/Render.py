@@ -63,6 +63,7 @@ class Render:
         self.chunk_data = dict(sorted(self.chunk_data.items(), key=lambda item: item[0][1]))
 
     def draw_objects(self, players):
+        players.sort_players()
         for name, player in players.all_players.items():
             player.draw()
 
